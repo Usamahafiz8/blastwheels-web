@@ -2,6 +2,11 @@
   "name": "blastwheels",
   "version": "0.1.0",
   "private": true,
+  "author": {
+    "name": "Muhammad Osama",
+    "email": "usamahafiz8@gmail.com",
+    "url": "https://github.com/usamahafiz8"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
