@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --foreground: #ffffff;
 }
 
 @theme inline {
@@ -12,15 +12,327 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
+
+/* Animated Background */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 15s ease infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 1s ease-out forwards;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Shimmer effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* 3D Transform on hover */
+.hover-3d {
+  transition: transform 0.3s ease;
+}
+
+.hover-3d:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(5deg) scale(1.05);
+}
+
+/* Starfield animation */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.star {
+  animation: twinkle 3s infinite;
+}
+
+/* Racing track effect */
+@keyframes race {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
+}
+
+.race-line {
+  animation: race 20s linear infinite;
+}
+
+/* Glow effect */
+.glow-orange {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.5),
+              0 0 40px rgba(249, 115, 22, 0.3),
+              0 0 60px rgba(249, 115, 22, 0.1);
+}
+
+.glow-orange-hover:hover {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.4),
+              0 0 40px rgba(249, 115, 22, 0.2);
+}
+
+/* Subtle glow effect */
+@keyframes subtle-glow {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Particle animation */
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.particle {
+  animation: particle-float 20s linear infinite;
+}
+
+/* Subtle border animation */
+@keyframes border-glow {
+  0%, 100% {
+    border-color: rgba(249, 115, 22, 0.3);
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.1);
+  }
+  50% {
+    border-color: rgba(249, 115, 22, 0.5);
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.2);
+  }
+}
+
+.animated-border {
+  animation: border-glow 3s ease-in-out infinite;
+}
+
+/* Rotating gradient */
+@keyframes rotate-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.rotate-gradient {
+  background-size: 200% 200%;
+  animation: rotate-gradient 8s ease infinite;
+}
+
+/* Scale pulse */
+@keyframes scale-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.scale-pulse {
+  animation: scale-pulse 2s ease-in-out infinite;
+}
+
+/* Slide in from sides */
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-left {
+  animation: slide-in-left 0.8s ease-out forwards;
+}
+
+.slide-in-right {
+  animation: slide-in-right 0.8s ease-out forwards;
+}
+
+/* dApp Kit ConnectButton Custom Styling */
+.connect-button-wrapper button,
+.connect-button-wrapper > button {
+  background: linear-gradient(to right, rgb(249, 115, 22), rgb(234, 88, 12)) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  padding: 0.625rem 1.5rem !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.3s ease !important;
+  transform: scale(1) !important;
+  box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.4), 0 4px 6px -2px rgba(249, 115, 22, 0.2) !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.connect-button-wrapper button:hover,
+.connect-button-wrapper > button:hover {
+  background: linear-gradient(to right, rgb(234, 88, 12), rgb(194, 65, 12)) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.6), 0 4px 6px -2px rgba(249, 115, 22, 0.3) !important;
+}
+
+/* Mobile full width */
+.connect-button-mobile button,
+.connect-button-mobile > button {
+  width: 100% !important;
+}
+
+/* Style for connected/disconnect state */
+.connect-button-wrapper button[data-state="connected"],
+.connect-button-wrapper [data-connected="true"] button {
+  background: linear-gradient(to right, rgb(239, 68, 68), rgb(220, 38, 38)) !important;
+  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.2) !important;
+}
+
+.connect-button-wrapper button[data-state="connected"]:hover,
+.connect-button-wrapper [data-connected="true"] button:hover {
+  background: linear-gradient(to right, rgb(220, 38, 38), rgb(185, 28, 28)) !important;
 }
