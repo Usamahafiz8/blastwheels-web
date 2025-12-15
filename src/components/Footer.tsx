@@ -22,8 +22,18 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <span className="text-2xl font-bold text-white">🪖 Blast Wheels</span>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="relative h-12 w-12 flex items-center justify-center">
+                <div className="absolute inset-0 bg-orange-500 blur-lg opacity-30 -z-10"></div>
+                <img
+                  src="/BlastWheels_Logo_512.png"
+                  alt="Blast Wheels"
+                  width={48}
+                  height={48}
+                  className="relative z-10 object-contain"
+                />
+              </div>
+              <span className="text-2xl font-bold text-white">Blast Wheels</span>
             </div>
             <p className="text-white/60 text-sm mb-4 max-w-md">
               The Ultimate Play-to-Earn Racing Game on Blast.fun! Climb the leaderboard, 

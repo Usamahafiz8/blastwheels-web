@@ -102,73 +102,103 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Hero Section */}
-      <section className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center max-w-5xl mx-auto">
-          {/* Logo */}
-          <div className="mb-8 animate-slide-up relative">
+      {/* Hero Section - Full Viewport */}
+      <section className="relative z-10 h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ height: 'calc(100vh - 80px)' }}>
+        <div className="text-center max-w-6xl mx-auto w-full">
+          {/* Enhanced Logo with Subtle Glow */}
+          <div className="mb-2 sm:mb-3 animate-slide-up relative">
             <div className="relative inline-block">
-              <div className="absolute inset-0 bg-orange-500 blur-3xl opacity-30 -z-10"></div>
-              <img
-                src="/BlastWheels_Logo_512.png"
-                alt="Blast Wheels"
-                width={200}
-                height={200}
-                className="relative z-10 object-contain transition-transform hover:scale-105 mx-auto animate-float"
-                style={{ maxWidth: 'min(200px, 30vw)' }}
-              />
+              {/* Single subtle glow layer */}
+              <div className="absolute inset-0 bg-orange-500 blur-2xl opacity-15 -z-10"></div>
+              
+              {/* Rotating ring effect - more subtle */}
+              <div className="absolute inset-0 -z-10">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] border border-orange-500/15 rounded-full animate-spin-slow"></div>
+              </div>
+              
+              {/* Logo with subtle effects - smaller */}
+              <div className="relative z-10">
+                <img
+                  src="/BlastWheels_Logo_512.png"
+                  alt="Blast Wheels"
+                  width={140}
+                  height={140}
+                  className="relative z-10 object-contain transition-all duration-500 hover:scale-105 hover:rotate-3 mx-auto animate-float"
+                  style={{ 
+                    maxWidth: 'min(140px, 20vw)',
+                    filter: 'drop-shadow(0 0 15px rgba(249, 115, 22, 0.3))'
+                  }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Enhanced Animated Title */}
-          <div className="mb-8 animate-slide-up relative" style={{ animationDelay: '0.1s' }}>
+          {/* Enhanced Animated Title with Subtle Effects */}
+          <div className="mb-1 sm:mb-2 animate-slide-up relative" style={{ animationDelay: '0.1s' }}>
             <div className="relative inline-block">
-              <h1 className="text-7xl sm:text-8xl lg:text-9xl font-black text-white mb-6 bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent rotate-gradient relative z-10">
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white mb-1 sm:mb-2 bg-gradient-to-r from-orange-300 via-orange-500 via-yellow-400 to-orange-600 bg-clip-text text-transparent rotate-gradient relative z-10 tracking-tight leading-none">
                 $WHEELS
               </h1>
-              {/* Subtle glow layer */}
-              <span className="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange-600 blur-2xl opacity-20 -z-10"></span>
+              {/* Single subtle glow layer */}
+              <span className="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange-600 blur-2xl opacity-15 -z-10"></span>
+              {/* Animated underline */}
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-0.5 bg-gradient-to-r from-transparent via-orange-500/60 to-transparent animate-expand"></div>
             </div>
           </div>
           
-          <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          {/* Enhanced Subtitle */}
+          <div className="animate-fade-in mb-1 sm:mb-2" style={{ animationDelay: '0.3s' }}>
             <div className="relative inline-block">
-              <h2 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white mb-10 animate-float relative z-10">
-                Blast Wheels
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-1 sm:mb-2 animate-float relative z-10 tracking-tight">
+                <span className="bg-gradient-to-r from-white via-orange-100 to-white bg-clip-text text-transparent">
+                  Blast Wheels
+                </span>
               </h2>
-              <div className="absolute -inset-2 bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-lg blur-lg -z-10"></div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/10 via-yellow-400/10 to-orange-600/10 rounded-2xl blur-xl -z-10"></div>
+              {/* Decorative elements */}
+              <div className="absolute -left-4 sm:-left-6 top-1/2 -translate-y-1/2 text-orange-500 text-xl sm:text-2xl animate-bounce" style={{ animationDelay: '0.5s' }}>🏁</div>
+              <div className="absolute -right-4 sm:-right-6 top-1/2 -translate-y-1/2 text-orange-500 text-xl sm:text-2xl animate-bounce" style={{ animationDelay: '0.7s' }}>🏁</div>
             </div>
           </div>
 
-          <div className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            <p className="text-xl sm:text-2xl text-white/80 mb-6 leading-relaxed">
-              The Ultimate Play-to-Earn Racing Game on Blast.fun! 🏁
+          {/* Enhanced Tagline */}
+          <div className="animate-slide-up mb-2 sm:mb-3" style={{ animationDelay: '0.5s' }}>
+            <p className="text-lg sm:text-xl md:text-2xl text-white/90 mb-1 leading-tight font-bold">
+              The Ultimate{' '}
+              <span className="bg-gradient-to-r from-orange-400 via-yellow-400 to-orange-500 bg-clip-text text-transparent animate-gradient">
+                Play-to-Earn
+              </span>{' '}
+              Racing Game! 🏁
             </p>
           </div>
 
-          <div className="animate-slide-up" style={{ animationDelay: '0.6s' }}>
-            <p className="text-lg text-white/70 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Climb the leaderboard, challenge your friends in live online races, and upgrade your garage with powerful cars & Upgrades. 
-              With built-in wallet integration, earning and spending your $WHEELS is seamless—deposit, race, earn, and withdraw with ease.
+          {/* Enhanced Description - Condensed */}
+          <div className="animate-slide-up mb-2 sm:mb-3" style={{ animationDelay: '0.7s' }}>
+            <p className="text-sm sm:text-base text-white/80 mb-2 max-w-3xl mx-auto leading-snug font-medium">
+              Climb the leaderboard, challenge your friends in live online races, and upgrade your garage with powerful cars & upgrades. 
+              With built-in wallet integration, earning and spending your <span className="text-orange-400 font-bold">$WHEELS</span> is seamless.
             </p>
           </div>
           
-          <div className="mb-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-            <div className="relative inline-block mb-8">
-              <p className="text-2xl font-extrabold text-orange-400 px-10 py-4 bg-gradient-to-r from-orange-500/20 via-orange-600/20 to-orange-500/20 rounded-full border-2 border-orange-500/40 relative z-10 shadow-lg shadow-orange-500/30">
+          {/* Enhanced CTA Badge - Compact */}
+          <div className="animate-fade-in" style={{ animationDelay: '0.9s' }}>
+            <div className="relative inline-block">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/15 via-yellow-400/15 to-orange-600/15 rounded-full blur-xl -z-10"></div>
+              <p className="text-base sm:text-lg md:text-xl font-extrabold text-orange-300 px-4 sm:px-6 md:px-8 py-1.5 sm:py-2 md:py-3 bg-gradient-to-r from-orange-500/30 via-orange-600/30 to-orange-500/30 rounded-full border-2 border-orange-400/60 relative z-10 shadow-lg shadow-orange-500/30 backdrop-blur-sm">
                 🔥 Real Interaction, Real Rewards 🔥
               </p>
-              <div className="absolute inset-0 bg-orange-500/10 rounded-full blur-xl -z-10"></div>
             </div>
-            <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto font-semibold leading-relaxed">
-              Blast Wheels brings next-level competition to the Blast Platform.
-            </p>
           </div>
+        </div>
+      </section>
 
+      {/* Contract Address Section - Below Hero */}
+      <section className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center max-w-6xl mx-auto">
           {/* Contract Address with Enhanced Design */}
           <div 
             className="glass border border-orange-500/30 rounded-xl p-6 mb-12 max-w-2xl mx-auto hover-3d glow-orange-hover transition-all duration-300 animate-slide-up"
-            style={{ animationDelay: '1s' }}
+            style={{ animationDelay: '0.1s' }}
           >
             <p className="text-white/60 text-sm mb-3 font-semibold">Contract Address:</p>
             <div className="flex items-center justify-center space-x-3 flex-wrap gap-2">

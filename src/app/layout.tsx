@@ -19,6 +19,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Blast Wheels - Play-to-Earn Racing Game",
   description: "The Ultimate Play-to-Earn Racing Game on Blast.fun! Climb the leaderboard, challenge your friends in live online races, and upgrade your garage with powerful cars.",
+  icons: {
+    icon: '/BlastWheels_Logo_512.png',
+    shortcut: '/BlastWheels_Logo_512.png',
+    apple: '/BlastWheels_Logo_512.png',
+  },
 };
 
 export default function RootLayout({
