@@ -28,6 +28,11 @@ export default function DashboardPage() {
   const [withdrawTxHash, setWithdrawTxHash] = useState(''); // no longer used, but kept for state reset
   const [withdrawing, setWithdrawing] = useState(false);
 
+  const walletMismatch =
+    !!account?.address &&
+    !!user?.walletAddress &&
+    account.address.toLowerCase() !== user.walletAddress.toLowerCase();
+
   useEffect(() => {
     if (user && account) {
       loadData();
@@ -143,10 +148,6 @@ export default function DashboardPage() {
           signAndExecute(
             {
               transaction: tx,
-              options: {
-                showEffects: true,
-                showBalanceChanges: true,
-              },
             },
             {
               onSuccess: async (result) => {
@@ -168,7 +169,7 @@ export default function DashboardPage() {
                   // Reload balances
                   const [blastwheelzRes, tokenBalanceRes] = await Promise.all([
                     apiClient.getBlastwheelzBalance(),
-                    apiClient.getBlastweelTokenBalance(account.address),
+                    apiClient.getBlastweelTokenBalance(account!.address),
                   ]);
                   if (blastwheelzRes.data) setBlastwheelzBalance(blastwheelzRes.data.balance);
                   if (tokenBalanceRes.data) setBlastweelTokenBalance(tokenBalanceRes.data.balance);
@@ -206,7 +207,7 @@ export default function DashboardPage() {
           // Reload balances
           const [blastwheelzRes, tokenBalanceRes] = await Promise.all([
             apiClient.getBlastwheelzBalance(),
-            apiClient.getBlastweelTokenBalance(account.address),
+            apiClient.getBlastweelTokenBalance(account!.address),
           ]);
           if (blastwheelzRes.data) setBlastwheelzBalance(blastwheelzRes.data.balance);
           if (tokenBalanceRes.data) setBlastweelTokenBalance(tokenBalanceRes.data.balance);
@@ -248,12 +249,14 @@ export default function DashboardPage() {
         setWithdrawAmount('');
         setWithdrawTxHash('');
         // Reload balances
-        const [blastwheelzRes, tokenBalanceRes] = await Promise.all([
-          apiClient.getBlastwheelzBalance(),
-          apiClient.getBlastweelTokenBalance(account.address),
-        ]);
-        if (blastwheelzRes.data) setBlastwheelzBalance(blastwheelzRes.data.balance);
-        if (tokenBalanceRes.data) setBlastweelTokenBalance(tokenBalanceRes.data.balance);
+        if (account) {
+          const [blastwheelzRes, tokenBalanceRes] = await Promise.all([
+            apiClient.getBlastwheelzBalance(),
+            apiClient.getBlastweelTokenBalance(account.address),
+          ]);
+          if (blastwheelzRes.data) setBlastwheelzBalance(blastwheelzRes.data.balance);
+          if (tokenBalanceRes.data) setBlastweelTokenBalance(tokenBalanceRes.data.balance);
+        }
       }
     } catch (error) {
       console.error('Withdrawal error:', error);
@@ -289,93 +292,174 @@ export default function DashboardPage() {
           Dashboard
         </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Blastwheelz Balance Card */}
-          <div className="glass border border-orange-500/30 rounded-xl p-6 hover-3d transition-all duration-300">
-            <h3 className="text-white/60 text-sm mb-2">Blastwheelz Balance</h3>
-            <p className="text-3xl font-bold text-orange-500">
-              {parseFloat(blastwheelzBalance).toFixed(2)}
-            </p>
-            <p className="text-white/40 text-xs mt-2">In-game currency</p>
-            <div className="flex space-x-2 mt-4">
-              <button
-                onClick={() => setShowPurchaseModal(true)}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-4 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-sm font-semibold"
-              >
-                Purchase
-              </button>
-              <button
-                onClick={() => setShowWithdrawModal(true)}
-                disabled={parseFloat(blastwheelzBalance) <= 0}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Withdraw
-              </button>
+        {/* Top cards: Account Overview + Your Performance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          {/* In-game + Wallet Overview */}
+          <div className="relative">
+            {/* Subtle glow background */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-orange-500/15 via-purple-500/8 to-blue-500/15 blur-2xl opacity-60 pointer-events-none" />
+            <div className="relative glass border border-orange-500/40 rounded-2xl px-4 py-3 transition-all duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-md shadow-orange-500/30">
+                    <span className="text-xs font-bold text-white tracking-tight">BW</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-[13px]">Account Overview</h3>
+                    <p className="text-white/50 text-[10px]">Wallet & in-game balances</p>
+                  </div>
+                </div>
+                {parseFloat(blastwheelzBalance) > 0 && (
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/40">
+                    Ready
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-3.5">
+                {/* Blastwheelz main metric */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-white/50 text-[10px]">Blastwheelz (In-game)</p>
+                    <p className="text-white/40 text-[10px] uppercase tracking-wide">
+                      {parseFloat(blastwheelzBalance) > 0 ? 'Ready to race' : 'No balance yet'}
+                    </p>
+                  </div>
+                  <p className="text-2xl md:text-3xl font-extrabold text-orange-400 tracking-tight leading-tight">
+                    {parseFloat(blastwheelzBalance).toFixed(2)}
+                  </p>
+                  <div className="mt-2 h-1 w-full rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-orange-400 via-yellow-400 to-emerald-400 transition-all duration-500"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          (parseFloat(blastwheelzBalance) / 1000) * 100,
+                        ).toFixed(0)}%`,
+                      }}
+                    />
+                  </div>
+                  {/* Progress bar is purely visual, no extra helper text to save space */}
+                </div>
+
+                {/* SUI & WHEELS quick stats */}
+                <div className="grid grid-cols-2 gap-2.5 text-xs">
+                  <div className="p-2 rounded-xl bg-white/5 border border-white/5">
+                    <p className="text-white/50 text-[10px] mb-1 flex items-center justify-between">
+                      <span>Native SUI (Gas)</span>
+                    </p>
+                    <p className="text-[12px] font-semibold text-purple-300">
+                      {parseFloat(nativeSuiBalance).toFixed(4)}{' '}
+                      <span className="text-[10px]">SUI</span>
+                    </p>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/5 border border-white/5">
+                    <p className="text-white/50 text-[10px] mb-1 flex items-center justify-between">
+                      <span>WHEELS Tokens</span>
+                    </p>
+                    <p className="text-[12px] font-semibold text-green-300">
+                      {parseFloat(wheelsBalance).toFixed(2)}{' '}
+                      <span className="text-[10px]">WHEELS</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Wallet info */}
+                <div className="mt-2 p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <p className="text-white/50 text-[10px] mb-1">Wallet Address</p>
+                  <p className="text-white/80 text-[10px] font-mono break-all leading-snug">
+                    {account.address}
+                  </p>
+                </div>
+
+                {walletMismatch && (
+                  <p className="mt-2 text-yellow-300 text-[10px]">
+                    Wallet mismatch detected. Please link your connected wallet on the{' '}
+                    <span
+                      className="underline cursor-pointer hover:text-yellow-100"
+                      onClick={() => window.location.assign('/profile')}
+                    >
+                      Profile
+                    </span>{' '}
+                    page before purchasing or withdrawing.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex space-x-2.5 mt-3.5">
+                <button
+                  onClick={() => setShowPurchaseModal(true)}
+                  disabled={walletMismatch}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2.5 px-4 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Purchase Blastwheelz
+                </button>
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  disabled={parseFloat(blastwheelzBalance) <= 0 || walletMismatch}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2.5 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Withdraw
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Native SUI Balance Card */}
-          <div className="glass border border-purple-500/30 rounded-xl p-6 hover-3d transition-all duration-300">
-            <h3 className="text-white/60 text-sm mb-2">Native SUI</h3>
-            <p className="text-3xl font-bold text-purple-500">
-              {parseFloat(nativeSuiBalance).toFixed(4)}
-            </p>
-            <p className="text-white/40 text-xs mt-2">Gas token</p>
-            <p className="text-white/30 text-xs mt-1">Wallet: {account.address.slice(0, 8)}...</p>
-          </div>
-
-          {/* WHEELS Token Balance Card */}
-          <div className="glass border border-green-500/30 rounded-xl p-6 hover-3d transition-all duration-300">
-            <h3 className="text-white/60 text-sm mb-2">WHEELS Tokens</h3>
-            <p className="text-3xl font-bold text-green-500">
-              {parseFloat(wheelsBalance).toFixed(2)}
-            </p>
-            <p className="text-white/40 text-xs mt-2">Game token</p>
-            <p className="text-white/30 text-xs mt-1">Package: 0x6a9c...c3ee</p>
-          </div>
-
-          {/* Blastweel Token Balance Card */}
-          <div className="glass border border-blue-500/30 rounded-xl p-6 hover-3d transition-all duration-300">
-            <h3 className="text-white/60 text-sm mb-2">Blastweel Tokens</h3>
-            <p className="text-3xl font-bold text-blue-500">
-              {parseInt(blastweelTokenBalance) > 0 
-                ? (parseInt(blastweelTokenBalance) / 1e9).toFixed(2) 
-                : '0.00'}
-            </p>
-            <p className="text-white/40 text-xs mt-2">Available for purchase</p>
-            <p className="text-white/30 text-xs mt-1">1 Token = 1 Blastwheelz</p>
-          </div>
-
-          {/* Stats Cards */}
-          {stats && (
-            <>
-              <div className="glass border border-orange-500/30 rounded-xl p-6 hover-3d transition-all duration-300">
-                <h3 className="text-white/60 text-sm mb-2">Total Games</h3>
-                <p className="text-3xl font-bold text-white">{stats.totalGames}</p>
-                <p className="text-white/40 text-xs mt-2">
-                  {stats.wins} Wins / {stats.losses} Losses
-                </p>
+          {/* Personal stats summary */}
+          <div className="glass border border-orange-500/30 rounded-2xl p-5">
+            <h2 className="text-lg font-bold text-white mb-3">Your Performance</h2>
+            {stats ? (
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Games</span>
+                  <span className="text-white font-semibold">{stats.totalGames}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Wins</span>
+                  <span className="text-emerald-400 font-semibold">{stats.wins}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Losses</span>
+                  <span className="text-red-400 font-semibold">{stats.losses}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-white/10 mt-1">
+                  <span className="text-white/60">Total Earnings</span>
+                  <span className="text-green-300 font-semibold">
+                    {parseFloat(stats.totalEarnings).toFixed(2)} WHEELS
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Rank</span>
+                  <span className="text-orange-300 font-semibold">
+                    #{stats.rank || 'N/A'}
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-white/10 mt-1.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white/60">Level {stats.level}</span>
+                    <span className="text-white/60">{stats.experience} XP</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-yellow-400 to-orange-500"
+                      style={{
+                        width: `${Math.min(100, (stats.experience / 1000) * 100).toFixed(0)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-1 text-white/40 text-[10px]">
+                    XP bar capped at 1000 XP for display.
+                  </p>
+                </div>
               </div>
-
-              <div className="glass border border-orange-500/30 rounded-xl p-6 hover-3d transition-all duration-300">
-                <h3 className="text-white/60 text-sm mb-2">Total Earnings</h3>
-                <p className="text-3xl font-bold text-green-500">
-                  {parseFloat(stats.totalEarnings).toFixed(2)} WHEELS
-                </p>
-                <p className="text-white/40 text-xs mt-2">Rank: #{stats.rank || 'N/A'}</p>
-              </div>
-
-              <div className="glass border border-orange-500/30 rounded-xl p-6 hover-3d transition-all duration-300">
-                <h3 className="text-white/60 text-sm mb-2">Level</h3>
-                <p className="text-3xl font-bold text-yellow-500">{stats.level}</p>
-                <p className="text-white/40 text-xs mt-2">{stats.experience} XP</p>
-              </div>
-            </>
-          )}
+            ) : (
+              <p className="text-white/60 text-sm">No stats available yet. Play some games!</p>
+            )}
+          </div>
         </div>
 
         {/* Leaderboard */}
-        <div className="glass border border-orange-500/30 rounded-xl p-6">
+        <div className="glass border border-orange-500/30 rounded-2xl p-6">
           <h2 className="text-2xl font-bold text-white mb-4">Top Players</h2>
           <div className="space-y-3">
             {leaderboard.length > 0 ? (

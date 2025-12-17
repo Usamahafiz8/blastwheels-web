@@ -25,14 +25,14 @@ import bcrypt from 'bcryptjs';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     await requireAuth(req);
-    const userId = params.id;
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id },
       select: {
         id: true,
         username: true,
@@ -127,16 +127,16 @@ export async function GET(
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const currentUser = await requireAuth(req);
-    const userId = params.id;
     const body = await req.json();
     const { username, email, password, walletAddress, role, isActive } = body;
 
     // Check if user is updating their own profile or is admin
-    const isOwnProfile = currentUser.id === userId;
+    const isOwnProfile = currentUser.id === id;
     const isAdmin = currentUser.role === 'ADMIN';
 
     if (!isOwnProfile && !isAdmin) {
@@ -179,7 +179,7 @@ export async function PUT(
       const existingUser = await prisma.user.findFirst({
         where: {
           AND: [
-            { id: { not: userId } },
+            { id: { not: id } },
             {
               OR: [
                 ...(username ? [{ username }] : []),
@@ -199,7 +199,7 @@ export async function PUT(
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id },
       data: updateData,
       select: {
         id: true,
@@ -251,14 +251,14 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const currentUser = await requireAuth(req);
-    const userId = params.id;
 
     // Check if user is deleting their own account or is admin
-    const isOwnAccount = currentUser.id === userId;
+    const isOwnAccount = currentUser.id === id;
     const isAdmin = currentUser.role === 'ADMIN';
 
     if (!isOwnAccount && !isAdmin) {
@@ -278,7 +278,7 @@ export async function DELETE(
 
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id },
     });
 
     if (!user) {
@@ -290,7 +290,7 @@ export async function DELETE(
 
     // Delete user (cascade will handle related records)
     await prisma.user.delete({
-      where: { id: userId },
+      where: { id },
     });
 
     return NextResponse.json({

@@ -19,6 +19,7 @@ interface AuthContextType {
   logout: () => void;
   isAdmin: boolean;
   refreshUser: () => Promise<void>;
+  updateProfile: (payload: { username?: string; email?: string; walletAddress?: string }) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -113,6 +114,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateProfile = async (payload: {
+    username?: string;
+    email?: string;
+    walletAddress?: string;
+  }): Promise<boolean> => {
+    try {
+      const response = await apiClient.updateProfile(payload);
+      if (response.data?.user) {
+        setUser(response.data.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Update profile failed:', error);
+      return false;
+    }
+  };
+
   const isAdmin = user?.role === 'ADMIN';
 
   return (
@@ -125,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isAdmin,
         refreshUser,
+        updateProfile,
       }}
     >
       {children}

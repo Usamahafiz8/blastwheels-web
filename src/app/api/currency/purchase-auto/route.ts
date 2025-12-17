@@ -48,9 +48,9 @@ export async function POST(req: NextRequest) {
     const { amount, walletAddress, txHash } = body;
 
     // Validate input
-    if (!amount || !walletAddress) {
+    if (!amount) {
       return NextResponse.json(
-        { error: 'Amount and walletAddress are required' },
+        { error: 'Amount is required' },
         { status: 400 }
       );
     }
@@ -62,6 +62,19 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Enforce that the wallet used on-chain matches the wallet saved in DB
+    if (walletAddress && walletAddress !== user.walletAddress) {
+      return NextResponse.json(
+        {
+          error: 'Wallet mismatch',
+          message: 'Please connect the wallet linked to your account',
+        },
+        { status: 400 }
+      );
+    }
+
+    const effectiveWalletAddress = user.walletAddress;
 
     // Convert amount to smallest unit (assuming 9 decimals like WHEELS)
     const amountInSmallestUnit = BigInt(Math.floor(purchaseAmount * 1_000_000_000));
@@ -84,7 +97,7 @@ export async function POST(req: NextRequest) {
       const isValid = await verifyPurchaseTransaction(
         txHash,
         amountInSmallestUnit,
-        walletAddress
+        effectiveWalletAddress
       );
 
       if (!isValid) {
@@ -154,7 +167,7 @@ export async function POST(req: NextRequest) {
         treasuryAddress,
         amount: purchaseAmount.toString(),
         amountInSmallestUnit: amountInSmallestUnit.toString(),
-        coinType: SUI_CONFIG.blastweelTokenType,
+        coinType: SUI_CONFIG.coinType,
         instructions: 'Build a transaction to transfer tokens to treasury, sign it, execute it, then call this endpoint again with the txHash',
       });
     }

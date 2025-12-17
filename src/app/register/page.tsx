@@ -150,12 +150,8 @@ export default function RegisterPage() {
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => wallets[0]?.disconnect()}
-                  className="text-white/60 hover:text-white text-sm"
-                >
-                  Disconnect
-                </button>
+                {/* The current dapp-kit Wallet type doesn't expose a disconnect method here, */}
+                {/* so we omit the manual disconnect button to satisfy TypeScript. */}
               </div>
             ) : (
               <div className="flex justify-center">

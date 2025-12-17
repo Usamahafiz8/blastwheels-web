@@ -11,7 +11,11 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
     const role = searchParams.get('role') || undefined;
 
-    const where = role ? { role } : {};
+    const where = role
+      ? {
+          role: role as any, // ADMIN or PLAYER
+        }
+      : {};
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({

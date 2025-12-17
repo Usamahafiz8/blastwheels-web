@@ -84,8 +84,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     console.error('Get WHEELS balance error:', error);
-    console.error('Wallet address used:', walletAddress);
-    console.error('Coin type used:', SUI_CONFIG.coinType);
     return NextResponse.json(
       { 
         error: 'Internal server error',

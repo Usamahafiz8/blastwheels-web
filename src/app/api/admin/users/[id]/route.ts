@@ -33,11 +33,11 @@ import { prisma } from '@/lib/db';
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     await requireRole(req, 'ADMIN');
-    const userId = params.id;
     const body = await req.json();
     const { role, isActive } = body;
 
@@ -46,7 +46,7 @@ export async function PATCH(
     if (isActive !== undefined) updateData.isActive = isActive;
 
     const user = await prisma.user.update({
-      where: { id: userId },
+      where: { id },
       data: updateData,
       select: {
         id: true,
@@ -97,15 +97,15 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     await requireRole(req, 'ADMIN');
-    const userId = params.id;
 
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id },
     });
 
     if (!user) {
@@ -124,7 +124,7 @@ export async function DELETE(
     }
 
     await prisma.user.delete({
-      where: { id: userId },
+      where: { id },
     });
 
     return NextResponse.json({

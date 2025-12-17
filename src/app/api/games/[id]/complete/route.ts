@@ -4,17 +4,17 @@ import { prisma } from '@/lib/db';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const user = await requireAuth(req);
-    const gameId = params.id;
     const body = await req.json();
     const { position, earnings, transactionId } = body;
 
     const gameSession = await prisma.gameSession.findFirst({
       where: {
-        id: gameId,
+        id,
         userId: user.id,
         status: { in: ['PENDING', 'IN_PROGRESS'] },
       },
@@ -29,7 +29,7 @@ export async function POST(
 
     // Update game session
     const updatedSession = await prisma.gameSession.update({
-      where: { id: gameId },
+      where: { id },
       data: {
         status: 'COMPLETED',
         position: position || null,
@@ -67,7 +67,7 @@ export async function POST(
         suiTxHash: transactionId || null,
         status: 'COMPLETED',
         metadata: {
-          gameSessionId: gameId,
+          gameSessionId: id,
           position,
         },
       },
