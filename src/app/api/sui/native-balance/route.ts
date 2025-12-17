@@ -69,7 +69,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     console.error('Get native SUI balance error:', error);
-    console.error('Wallet address used:', user.walletAddress);
     return NextResponse.json(
       { 
         error: 'Internal server error',

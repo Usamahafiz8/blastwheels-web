@@ -4,15 +4,15 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const user = await requireAuth(req);
-    const gameId = params.id;
 
     const gameSession = await prisma.gameSession.findFirst({
       where: {
-        id: gameId,
+        id,
         userId: user.id, // Ensure user can only access their own games
       },
       include: {

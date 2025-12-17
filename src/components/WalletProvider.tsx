@@ -36,9 +36,8 @@ export default function AppWalletProvider({
     // This only needs to be done once
     if (!isRegistered) {
       try {
-        registerSlushWallet('Blast Wheels', {
-          network: 'mainnet', // Change to 'testnet' if needed
-        });
+        // Register Slush wallet; current dapp-kit types only accept origin/metadata options
+        registerSlushWallet('Blast Wheels', {});
         setIsRegistered(true);
       } catch (error) {
         console.error('Failed to register Slush wallet:', error);
@@ -49,10 +48,7 @@ export default function AppWalletProvider({
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork="mainnet">
-        <WalletProvider
-          autoConnect
-          slushWallet
-        >
+        <WalletProvider autoConnect>
           {children}
         </WalletProvider>
       </SuiClientProvider>
