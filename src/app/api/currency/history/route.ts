@@ -23,6 +23,12 @@ import { prisma } from '@/lib/db';
  *           type: integer
  *           default: 0
  *         description: Number of transactions to skip
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [purchase, withdrawal]
+ *         description: Filter by transaction type (purchase or withdrawal)
  *     responses:
  *       200:
  *         description: Transaction history
@@ -47,12 +53,23 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
+    const transactionType = searchParams.get('type') || undefined;
+    const whereClause: any = {
+      userId: user.id,
+    };
+    
+    if (transactionType === 'purchase') {
+      whereClause.type = 'CURRENCY_PURCHASE';
+    } else if (transactionType === 'withdrawal') {
+      whereClause.type = 'WITHDRAWAL';
+    } else {
+      // Get both purchase and withdrawal transactions
+      whereClause.type = { in: ['CURRENCY_PURCHASE', 'WITHDRAWAL'] };
+    }
+
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
-        where: {
-          userId: user.id,
-          type: 'CURRENCY_PURCHASE',
-        },
+        where: whereClause,
         orderBy: {
           createdAt: 'desc',
         },

@@ -197,6 +197,27 @@ class ApiClient {
     }>('/sui/balance');
   }
 
+  async getNativeSuiBalance(walletAddress?: string) {
+    const params = walletAddress ? `?walletAddress=${encodeURIComponent(walletAddress)}` : '';
+    return this.request<{
+      walletAddress: string;
+      balance: string;
+      balanceSui: string;
+      coinType: string;
+    }>(`/sui/native-balance${params}`);
+  }
+
+  async getWheelsBalance(walletAddress?: string) {
+    const params = walletAddress ? `?walletAddress=${encodeURIComponent(walletAddress)}` : '';
+    return this.request<{
+      walletAddress: string;
+      balance: string;
+      balanceFormatted: string;
+      coinType: string;
+      coinObjects: number;
+    }>(`/sui/wheels-balance${params}`);
+  }
+
   async getTransaction(txHash: string) {
     return this.request<{ transaction: any }>(`/sui/transaction/${txHash}`);
   }
@@ -274,13 +295,14 @@ class ApiClient {
     }>('/currency/balance');
   }
 
-  async getBlastweelTokenBalance() {
+  async getBlastweelTokenBalance(walletAddress?: string) {
+    const params = walletAddress ? `?walletAddress=${encodeURIComponent(walletAddress)}` : '';
     return this.request<{
       walletAddress: string;
       balance: string;
       coinType: string;
       coinObjects: number;
-    }>('/currency/token-balance');
+    }>(`/currency/token-balance${params}`);
   }
 
   async purchaseBlastwheelz(payload: {
@@ -302,10 +324,53 @@ class ApiClient {
     });
   }
 
-  async getCurrencyHistory(limit?: number, offset?: number) {
+  async purchaseBlastwheelzAuto(payload: {
+    amount: string;
+    walletAddress: string;
+    txHash?: string;
+  }) {
+    return this.request<{
+      message: string;
+      balance?: string;
+      transaction?: {
+        id: string;
+        amount: string;
+        type: string;
+        status: string;
+      };
+      treasuryAddress?: string;
+      amountInSmallestUnit?: string;
+      coinType?: string;
+      instructions?: string;
+    }>('/currency/purchase-auto', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async withdrawBlastwheelz(payload: {
+    amount: string;
+  }) {
+    return this.request<{
+      message: string;
+      balance: string;
+      transaction: {
+        id: string;
+        amount: string;
+        type: string;
+        status: string;
+      };
+    }>('/currency/withdraw', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getCurrencyHistory(limit?: number, offset?: number, type?: 'purchase' | 'withdrawal') {
     const params = new URLSearchParams();
     if (limit) params.append('limit', limit.toString());
     if (offset) params.append('offset', offset.toString());
+    if (type) params.append('type', type);
     const query = params.toString() ? `?${params.toString()}` : '';
     return this.request<{
       transactions: any[];
