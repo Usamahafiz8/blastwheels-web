@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  PLAYER
+}
+
+enum GameStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String?   @unique
+  username          String    @unique
+  walletAddress     String    @unique
+  role              UserRole  @default(PLAYER)
+  passwordHash      String?   // Optional for wallet-only auth
+  blastwheelzBalance Decimal  @default(0) @db.Decimal(18, 8) // In-game currency balance
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  gameSessions      GameSession[]
+  transactions      Transaction[]
+  playerStats       PlayerStats?
+
+  @@index([walletAddress])
+  @@index([email])
+  @@index([role])
+}
+
+model PlayerStats {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalGames      Int      @default(0)
+  wins            Int      @default(0)
+  losses          Int      @default(0)
+  totalEarnings   Decimal  @default(0) @db.Decimal(18, 8)
+  totalSpent      Decimal  @default(0) @db.Decimal(18, 8)
+  rank            Int      @default(0)
+  level           Int      @default(1)
+  experience      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([rank])
+  @@index([level])
+}
+
+model GameSession {
+  id            String     @id @default(uuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        GameStatus @default(PENDING)
+  entryFee      Decimal    @db.Decimal(18, 8)
+  prizePool     Decimal    @default(0) @db.Decimal(18, 8)
+  position      Int?
+  earnings      Decimal    @default(0) @db.Decimal(18, 8)
+  transactionId String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  completedAt   DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String   // DEPOSIT, WITHDRAWAL, GAME_ENTRY, GAME_REWARD, PURCHASE, CURRENCY_PURCHASE
+  amount        Decimal  @db.Decimal(18, 8)
+  suiTxHash     String?  @unique
+  status        String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  metadata      Json?    // Additional transaction data
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([suiTxHash])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model NFT {
+  id            String   @id @default(uuid())
+  tokenId       String   @unique
+  ownerAddress  String
+  collectionId  String?
+  name          String
+  description   String?
+  imageUrl      String?
+  metadata      Json?
+  suiObjectId   String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([ownerAddress])
+  @@index([tokenId])
+  @@index([suiObjectId])
+}
+

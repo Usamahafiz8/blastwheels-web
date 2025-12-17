@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ConnectButton } from '@mysten/dapp-kit';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, isAdmin, logout } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-orange-500/20">
@@ -51,9 +53,55 @@ export default function Header() {
             >
               Roadmap
             </a>
+            {!user && (
+              <>
+                <Link
+                  href="/login"
+                  className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide"
+                >
+                  Register
+                </Link>
+              </>
+            )}
+            {user && (
+              <Link
+                href="/dashboard"
+                className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide"
+              >
+                Dashboard
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide"
+              >
+                Admin
+              </Link>
+            )}
+            <Link
+              href="/api-docs"
+              className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide"
+            >
+              API Docs
+            </Link>
             <div className="connect-button-wrapper">
               <ConnectButton connectText="Connect Wallet" />
             </div>
+            {user && (
+              <button
+                onClick={logout}
+                className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide"
+              >
+                Logout
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -114,12 +162,66 @@ export default function Header() {
               >
                 Roadmap
               </a>
+              {!user && (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Register
+                  </Link>
+                </>
+              )}
+              {user && (
+                <Link
+                  href="/dashboard"
+                  className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Admin
+                </Link>
+              )}
+              <Link
+                href="/api-docs"
+                className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                API Docs
+              </Link>
               <div 
                 className="mt-4 connect-button-wrapper connect-button-mobile"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <ConnectButton connectText="Connect Wallet" />
               </div>
+              {user && (
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm uppercase tracking-wide py-2 text-left"
+                >
+                  Logout
+                </button>
+              )}
             </div>
           </div>
         )}
