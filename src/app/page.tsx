@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import Toast from '@/components/Toast';
 
+// Deterministic random function based on seed (index)
+function seededRandom(seed: number) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
 export default function Home() {
   const [isVisible, setIsVisible] = useState<{ [key: string]: boolean }>({
     chart: false,
@@ -57,20 +63,23 @@ export default function Home() {
         <div className="absolute top-1/2 right-1/3 w-[400px] h-[400px] bg-gradient-to-r from-orange-400/15 via-orange-500/10 to-orange-400/15 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1.5s' }}></div>
         
         {/* More animated stars with varying sizes */}
-        {Array.from({ length: 80 }).map((_, i) => (
-          <div
-            key={i}
-            className="star absolute bg-white rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: `${Math.random() * 3 + 1}px`,
-              height: `${Math.random() * 3 + 1}px`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`,
-            }}
-          />
-        ))}
+        {Array.from({ length: 80 }).map((_, i) => {
+          const seed = i * 0.1;
+          return (
+            <div
+              key={i}
+              className="star absolute bg-white rounded-full"
+              style={{
+                left: `${seededRandom(seed) * 100}%`,
+                top: `${seededRandom(seed + 1) * 100}%`,
+                width: `${seededRandom(seed + 2) * 3 + 1}px`,
+                height: `${seededRandom(seed + 3) * 3 + 1}px`,
+                animationDelay: `${seededRandom(seed + 4) * 3}s`,
+                animationDuration: `${2 + seededRandom(seed + 5) * 3}s`,
+              }}
+            />
+          );
+        })}
         
         {/* Enhanced Racing Lines with glow */}
         <div className="absolute top-0 left-0 w-full h-full">
@@ -88,18 +97,21 @@ export default function Home() {
         </div>
 
         {/* Floating particles */}
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={`particle-${i}`}
-            className="particle absolute w-2 h-2 bg-orange-500/30 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${100 + Math.random() * 20}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${15 + Math.random() * 10}s`,
-            }}
-          />
-        ))}
+        {Array.from({ length: 20 }).map((_, i) => {
+          const seed = i * 0.2;
+          return (
+            <div
+              key={`particle-${i}`}
+              className="particle absolute w-2 h-2 bg-orange-500/30 rounded-full"
+              style={{
+                left: `${seededRandom(seed) * 100}%`,
+                top: `${100 + seededRandom(seed + 1) * 20}%`,
+                animationDelay: `${seededRandom(seed + 2) * 5}s`,
+                animationDuration: `${15 + seededRandom(seed + 3) * 10}s`,
+              }}
+            />
+          );
+        })}
       </div>
 
       {/* Hero Section - Full Viewport */}
