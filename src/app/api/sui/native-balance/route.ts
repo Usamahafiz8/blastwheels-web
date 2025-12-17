@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { suiClient, SUI_CONFIG } from '@/lib/sui';
+import { suiClient } from '@/lib/sui';
 
 /**
  * @swagger
- * /api/currency/token-balance:
+ * /api/sui/native-balance:
  *   get:
- *     summary: Get user's blastweel token balance from Sui wallet
- *     tags: [Currency]
+ *     summary: Get user's native SUI token balance
+ *     tags: [Sui]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User's blastweel token balance
+ *         description: User's native SUI balance
  *         content:
  *           application/json:
  *             schema:
@@ -22,10 +22,10 @@ import { suiClient, SUI_CONFIG } from '@/lib/sui';
  *                   type: string
  *                 balance:
  *                   type: string
- *                 coinType:
+ *                   description: Balance in MIST (1 SUI = 1,000,000,000 MIST)
+ *                 balanceSui:
  *                   type: string
- *                 coinObjects:
- *                   type: integer
+ *                   description: Balance in SUI
  *       401:
  *         description: Unauthorized
  */
@@ -53,31 +53,28 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get coin objects for the blastweel token
-    const coins = await suiClient.getCoins({
+    // Get native SUI balance
+    const balance = await suiClient.getBalance({
       owner: walletAddress,
-      coinType: SUI_CONFIG.blastweelTokenType,
     });
-
-    // Calculate total balance
-    let totalBalance = 0;
-    for (const coin of coins.data) {
-      totalBalance += parseInt(coin.balance || '0');
-    }
 
     return NextResponse.json({
       walletAddress,
-      balance: totalBalance.toString(),
-      coinType: SUI_CONFIG.blastweelTokenType,
-      coinObjects: coins.data.length,
+      balance: balance.totalBalance,
+      balanceSui: (parseInt(balance.totalBalance) / 1_000_000_000).toString(),
+      coinType: '0x2::sui::SUI',
     });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.error('Get token balance error:', error);
+    console.error('Get native SUI balance error:', error);
+    console.error('Wallet address used:', user.walletAddress);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error.message || 'Failed to fetch SUI balance',
+      },
       { status: 500 }
     );
   }

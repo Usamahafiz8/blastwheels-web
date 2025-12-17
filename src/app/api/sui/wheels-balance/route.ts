@@ -4,15 +4,15 @@ import { suiClient, SUI_CONFIG } from '@/lib/sui';
 
 /**
  * @swagger
- * /api/currency/token-balance:
+ * /api/sui/wheels-balance:
  *   get:
- *     summary: Get user's blastweel token balance from Sui wallet
- *     tags: [Currency]
+ *     summary: Get user's WHEELS token balance from Sui wallet
+ *     tags: [Sui]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User's blastweel token balance
+ *         description: User's WHEELS token balance
  *         content:
  *           application/json:
  *             schema:
@@ -22,6 +22,10 @@ import { suiClient, SUI_CONFIG } from '@/lib/sui';
  *                   type: string
  *                 balance:
  *                   type: string
+ *                   description: Balance in smallest unit (9 decimals)
+ *                 balanceFormatted:
+ *                   type: string
+ *                   description: Balance formatted with decimals
  *                 coinType:
  *                   type: string
  *                 coinObjects:
@@ -53,10 +57,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get coin objects for the blastweel token
+    // Get WHEELS token coins (9 decimals)
     const coins = await suiClient.getCoins({
       owner: walletAddress,
-      coinType: SUI_CONFIG.blastweelTokenType,
+      coinType: SUI_CONFIG.coinType,
     });
 
     // Calculate total balance
@@ -65,19 +69,28 @@ export async function GET(req: NextRequest) {
       totalBalance += parseInt(coin.balance || '0');
     }
 
+    // Format balance with 9 decimals
+    const balanceFormatted = (totalBalance / 1_000_000_000).toFixed(9);
+
     return NextResponse.json({
       walletAddress,
       balance: totalBalance.toString(),
-      coinType: SUI_CONFIG.blastweelTokenType,
+      balanceFormatted,
+      coinType: SUI_CONFIG.coinType,
       coinObjects: coins.data.length,
     });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.error('Get token balance error:', error);
+    console.error('Get WHEELS balance error:', error);
+    console.error('Wallet address used:', walletAddress);
+    console.error('Coin type used:', SUI_CONFIG.coinType);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error.message || 'Failed to fetch WHEELS balance',
+      },
       { status: 500 }
     );
   }
