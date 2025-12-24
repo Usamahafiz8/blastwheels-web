@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import Toast from '@/components/Toast';
 
 // Deterministic random function based on seed (index)
@@ -15,6 +16,10 @@ export default function Home() {
     partnerships: false,
     join: false,
     roadmap: false,
+    features: false,
+    marketplace: false,
+    races: false,
+    nfts: false,
   });
   const [toast, setToast] = useState({ message: '', isVisible: false, type: 'success' as 'success' | 'error' });
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -114,109 +119,77 @@ export default function Home() {
         })}
       </div>
 
-      {/* Hero Section - Full Viewport */}
-      <section className="relative z-10 h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ height: 'calc(100vh - 80px)' }}>
-        <div className="text-center max-w-6xl mx-auto w-full">
-          {/* Enhanced Logo with Subtle Glow */}
-          <div className="mb-2 sm:mb-3 animate-slide-up relative">
+      {/* Hero Section - Minimal */}
+      <section className="relative z-10 py-12 sm:py-16 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-4xl mx-auto w-full">
+          {/* Logo - Smaller */}
+          <div className="mb-3 animate-slide-up relative">
             <div className="relative inline-block">
-              {/* Single subtle glow layer */}
-              <div className="absolute inset-0 bg-orange-500 blur-2xl opacity-15 -z-10"></div>
-              
-              {/* Rotating ring effect - more subtle */}
-              <div className="absolute inset-0 -z-10">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] border border-orange-500/15 rounded-full animate-spin-slow"></div>
-              </div>
-              
-              {/* Logo with subtle effects - smaller */}
-              <div className="relative z-10">
+              <div className="absolute inset-0 bg-orange-500 blur-xl opacity-10 -z-10"></div>
                 <img
                   src="/BlastWheels_Logo_512.png"
                   alt="Blast Wheels"
-                  width={140}
-                  height={140}
-                  className="relative z-10 object-contain transition-all duration-500 hover:scale-105 hover:rotate-3 mx-auto animate-float"
+                width={80}
+                height={80}
+                className="relative z-10 object-contain mx-auto"
                   style={{ 
-                    maxWidth: 'min(140px, 20vw)',
-                    filter: 'drop-shadow(0 0 15px rgba(249, 115, 22, 0.3))'
+                  filter: 'drop-shadow(0 0 10px rgba(249, 115, 22, 0.3))'
                   }}
                 />
-              </div>
             </div>
           </div>
 
-          {/* Enhanced Animated Title with Subtle Effects */}
-          <div className="mb-1 sm:mb-2 animate-slide-up relative" style={{ animationDelay: '0.1s' }}>
-            <div className="relative inline-block">
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white mb-1 sm:mb-2 bg-gradient-to-r from-orange-300 via-orange-500 via-yellow-400 to-orange-600 bg-clip-text text-transparent rotate-gradient relative z-10 tracking-tight leading-none">
-                $WHEELS
+          {/* Title - Compact */}
+          <div className="mb-2 animate-slide-up relative" style={{ animationDelay: '0.1s' }}>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-1 bg-gradient-to-r from-orange-300 via-orange-500 to-orange-600 bg-clip-text text-transparent tracking-tight">
+              Blast Wheels
               </h1>
-              {/* Single subtle glow layer */}
-              <span className="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange-600 blur-2xl opacity-15 -z-10"></span>
-              {/* Animated underline */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-0.5 bg-gradient-to-r from-transparent via-orange-500/60 to-transparent animate-expand"></div>
-            </div>
+            <p className="text-lg sm:text-xl text-orange-400 font-bold">$WHEELS</p>
           </div>
           
-          {/* Enhanced Subtitle */}
-          <div className="animate-fade-in mb-1 sm:mb-2" style={{ animationDelay: '0.3s' }}>
-            <div className="relative inline-block">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-1 sm:mb-2 animate-float relative z-10 tracking-tight">
-                <span className="bg-gradient-to-r from-white via-orange-100 to-white bg-clip-text text-transparent">
-                  Blast Wheels
-                </span>
-              </h2>
-              <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/10 via-yellow-400/10 to-orange-600/10 rounded-2xl blur-xl -z-10"></div>
-              {/* Decorative elements */}
-              <div className="absolute -left-4 sm:-left-6 top-1/2 -translate-y-1/2 text-orange-500 text-xl sm:text-2xl animate-bounce" style={{ animationDelay: '0.5s' }}>🏁</div>
-              <div className="absolute -right-4 sm:-right-6 top-1/2 -translate-y-1/2 text-orange-500 text-xl sm:text-2xl animate-bounce" style={{ animationDelay: '0.7s' }}>🏁</div>
-            </div>
-          </div>
-
-          {/* Enhanced Tagline */}
-          <div className="animate-slide-up mb-2 sm:mb-3" style={{ animationDelay: '0.5s' }}>
-            <p className="text-lg sm:text-xl md:text-2xl text-white/90 mb-1 leading-tight font-bold">
-              The Ultimate{' '}
-              <span className="bg-gradient-to-r from-orange-400 via-yellow-400 to-orange-500 bg-clip-text text-transparent animate-gradient">
-                Play-to-Earn
-              </span>{' '}
-              Racing Game! 🏁
+          {/* Tagline - Compact */}
+          <div className="mb-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <p className="text-base sm:text-lg text-white/90 font-semibold">
+              Next-Generation <span className="text-orange-400">Play-to-Earn</span> Racing Game on Sui
             </p>
           </div>
 
-          {/* Enhanced Description - Condensed */}
-          <div className="animate-slide-up mb-2 sm:mb-3" style={{ animationDelay: '0.7s' }}>
-            <p className="text-sm sm:text-base text-white/80 mb-2 max-w-3xl mx-auto leading-snug font-medium">
-              Climb the leaderboard, challenge your friends in live online races, and upgrade your garage with powerful cars & upgrades. 
-              With built-in wallet integration, earning and spending your <span className="text-orange-400 font-bold">$WHEELS</span> is seamless.
+          {/* Description - Condensed */}
+          <div className="mb-4 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <p className="text-sm text-white/70 mb-3 max-w-2xl mx-auto leading-relaxed">
+              Compete in <span className="text-orange-400 font-semibold">live online races</span>, climb <span className="text-orange-400 font-semibold">leaderboards</span>, and upgrade your garage with <span className="text-orange-400 font-semibold">NFT cars</span>. 
+              Seamless wallet integration for deposit, race, earn, and withdraw <span className="text-orange-400 font-semibold">$WHEELS</span>.
             </p>
           </div>
           
-          {/* Enhanced CTA Badge - Compact */}
-          <div className="animate-fade-in" style={{ animationDelay: '0.9s' }}>
-            <div className="relative inline-block">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/15 via-yellow-400/15 to-orange-600/15 rounded-full blur-xl -z-10"></div>
-              <p className="text-base sm:text-lg md:text-xl font-extrabold text-orange-300 px-4 sm:px-6 md:px-8 py-1.5 sm:py-2 md:py-3 bg-gradient-to-r from-orange-500/30 via-orange-600/30 to-orange-500/30 rounded-full border-2 border-orange-400/60 relative z-10 shadow-lg shadow-orange-500/30 backdrop-blur-sm">
-                🔥 Real Interaction, Real Rewards 🔥
-              </p>
-            </div>
+          {/* CTA Buttons - Compact */}
+          <div className="animate-fade-in flex flex-col sm:flex-row gap-3 justify-center items-center" style={{ animationDelay: '0.4s' }}>
+            <Link
+              href="/dashboard"
+              className="group relative px-6 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-orange-500/50 text-sm sm:text-base"
+            >
+              <span className="relative z-10">🚀 Start Racing</span>
+            </Link>
+            <a
+              href="#marketplace"
+              className="group relative px-6 py-2.5 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 border border-orange-500/30 text-sm sm:text-base"
+            >
+              <span className="relative z-10">🛒 NFT Marketplace</span>
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Contract Address Section - Below Hero */}
-      <section className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center max-w-6xl mx-auto">
-          {/* Contract Address with Enhanced Design */}
+      {/* Contract Address Section - Compact & Mobile Responsive */}
+      <section className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+        <div className="text-center max-w-4xl mx-auto">
           <div 
-            className="glass border border-orange-500/30 rounded-xl p-6 mb-12 max-w-2xl mx-auto hover-3d glow-orange-hover transition-all duration-300 animate-slide-up"
-            style={{ animationDelay: '0.1s' }}
+            className="glass border border-orange-500/30 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 max-w-2xl mx-auto hover-3d glow-orange-hover transition-all duration-300"
           >
-            <p className="text-white/60 text-sm mb-3 font-semibold">Contract Address:</p>
-            <div className="flex items-center justify-center space-x-3 flex-wrap gap-2">
-              <code className="text-white/90 text-xs sm:text-sm font-mono bg-white/5 px-4 py-2 rounded-lg border border-white/10 break-all relative overflow-hidden">
-                <span className="shimmer absolute inset-0"></span>
-                <span className="relative z-10">0x6a9c2ded791f1eea4c23ac9bc3dbebf3e5b9f828a9837c9dd62d5e5698aac3ee::wheels::WHEELS</span>
+            <p className="text-white/60 text-xs sm:text-sm mb-2 font-semibold">Contract Address:</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+              <code className="text-white/90 text-[10px] sm:text-xs font-mono bg-white/5 px-2 sm:px-3 py-1.5 rounded border border-white/10 break-all w-full sm:w-auto text-center sm:text-left">
+                0x6a9c2ded791f1eea4c23ac9bc3dbebf3e5b9f828a9837c9dd62d5e5698aac3ee::wheels::WHEELS
               </code>
               <button
                 onClick={async () => {
@@ -227,88 +200,217 @@ export default function Home() {
                     setToast({ message: 'Failed to copy', isVisible: true, type: 'error' });
                   }
                 }}
-                className="text-white/60 hover:text-orange-500 transition-all px-3 py-2 rounded-lg hover:bg-orange-500/10 transform hover:scale-110"
+                className="text-white/60 hover:text-orange-500 transition-all px-3 py-2 rounded hover:bg-orange-500/10 transform hover:scale-110 flex-shrink-0"
                 title="Copy contract address"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </button>
             </div>
           </div>
 
-          {/* Ultra Enhanced BUY $WHEELS Buttons Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-20">
-            {Array.from({ length: 36 }).map((_, i) => (
+          {/* Compact BUY $WHEELS Buttons Grid */}
+          {/* <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 mb-8">
+            {Array.from({ length: 24 }).map((_, i) => (
               <button
                 key={i}
-                className="group relative px-5 py-4 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-extrabold rounded-xl transition-all duration-300 transform hover:scale-110 hover:rotate-1 shadow-lg shadow-orange-500/40 hover:shadow-orange-500/60 text-sm sm:text-base overflow-hidden"
-                style={{ 
-                  animationDelay: `${i * 0.03}s`,
-                  animation: isVisible[`button-${i}`] ? 'slide-up 0.6s ease-out forwards' : 'none',
-                  opacity: isVisible[`button-${i}`] ? 1 : 0,
-                }}
+                className="group relative px-3 py-2 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md shadow-orange-500/30 hover:shadow-orange-500/50 text-xs overflow-hidden"
               >
-                {/* Multiple shimmer layers */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
-                <span className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 via-transparent to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-400/0 via-yellow-400/20 to-orange-400/0 group-hover:via-yellow-400/40 transition-all duration-500"></div>
-                <span className="relative z-10 flex items-center justify-center space-x-1">
-                  <span>BUY</span>
-                  <span className="text-yellow-300">$WHEELS</span>
-                </span>
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                <span className="relative z-10">BUY $WHEELS</span>
               </button>
             ))}
-          </div>
+          </div> */}
         </div>
       </section>
 
-      {/* Chart Section with Animation */}
+      {/* Game Features Section - Compact & Gamey & Mobile Responsive */}
       <section 
-        id="chart" 
-        ref={setRef('chart')}
-        className={`relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-orange-500/20 transition-all duration-1000 ${
-          isVisible.chart ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        id="features" 
+        ref={setRef('features')}
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
+          isVisible.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}
       >
-        <div className="text-center">
-          <h2 className="text-5xl sm:text-6xl font-extrabold text-white mb-12 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent relative">
-            Chart
+        <div className="text-center max-w-6xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 sm:mb-3 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+            🎮 Game Features
           </h2>
-          <div className="glass border border-orange-500/20 rounded-xl p-12 min-h-[400px] flex items-center justify-center hover-3d transition-all duration-300">
-            <div className="text-center">
-              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center animate-pulse-glow">
-                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+          <p className="text-xs sm:text-sm text-white/60 mb-4 sm:mb-6 max-w-2xl mx-auto px-2">
+            Blockchain-powered racing with real rewards
+          </p>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+            {/* Live Online Races */}
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-2 sm:p-3 md:p-4 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-2 sm:mb-3 mx-auto group-hover:scale-110 transition-transform">
+                <span className="text-xl sm:text-2xl">🏁</span>
               </div>
-              <p className="text-white/60 text-lg">Chart integration coming soon...</p>
+              <h3 className="text-xs sm:text-sm font-bold text-white mb-1 sm:mb-2 text-center">Live Races</h3>
+              <p className="text-[10px] sm:text-xs text-white/70 text-center leading-tight px-1">
+                Real-time multiplayer races worldwide
+              </p>
+            </div>
+
+            {/* NFT Cars */}
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-2 sm:p-3 md:p-4 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-2 sm:mb-3 mx-auto group-hover:scale-110 transition-transform">
+                <span className="text-xl sm:text-2xl">🚗</span>
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white mb-1 sm:mb-2 text-center">NFT Cars</h3>
+              <p className="text-[10px] sm:text-xs text-white/70 text-center leading-tight px-1">
+                Own, upgrade & race unique NFT cars
+              </p>
+            </div>
+
+            {/* Leaderboards */}
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-2 sm:p-3 md:p-4 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-2 sm:mb-3 mx-auto group-hover:scale-110 transition-transform">
+                <span className="text-xl sm:text-2xl">🏆</span>
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white mb-1 sm:mb-2 text-center">Leaderboards</h3>
+              <p className="text-[10px] sm:text-xs text-white/70 text-center leading-tight px-1">
+                Climb ranks & compete for top spots
+              </p>
+            </div>
+
+            {/* NFT Marketplace */}
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-2 sm:p-3 md:p-4 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-2 sm:mb-3 mx-auto group-hover:scale-110 transition-transform">
+                <span className="text-xl sm:text-2xl">🛒</span>
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white mb-1 sm:mb-2 text-center">Marketplace</h3>
+              <p className="text-[10px] sm:text-xs text-white/70 text-center leading-tight px-1">
+                Buy, sell & trade NFT cars on-chain
+              </p>
+            </div>
+
+            {/* Key-to-Key Racing */}
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-2 sm:p-3 md:p-4 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-2 sm:mb-3 mx-auto group-hover:scale-110 transition-transform">
+                <span className="text-xl sm:text-2xl">⚡</span>
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white mb-1 sm:mb-2 text-center">NFT vs NFT</h3>
+              <p className="text-[10px] sm:text-xs text-white/70 text-center leading-tight px-1">
+                Key-to-key races with XP rewards
+              </p>
+            </div>
+
+            {/* Sui Blockchain */}
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-2 sm:p-3 md:p-4 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-2 sm:mb-3 mx-auto group-hover:scale-110 transition-transform">
+                <span className="text-xl sm:text-2xl">⛓️</span>
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white mb-1 sm:mb-2 text-center">Built on Sui</h3>
+              <p className="text-[10px] sm:text-xs text-white/70 text-center leading-tight px-1">
+                Fast, low-fee blockchain integration
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Partnerships/Sponsors Section */}
+      {/* Chart Section - Compact & Mobile Responsive */}
+      <section 
+        id="chart" 
+        ref={setRef('chart')}
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
+          isVisible.chart ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        }`}
+      >
+        <div className="text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-3 sm:mb-4 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+            📊 Chart
+          </h2>
+          <div className="glass border border-orange-500/20 rounded-lg p-6 sm:p-8 min-h-[150px] sm:min-h-[200px] flex items-center justify-center hover-3d transition-all duration-300">
+            <div className="text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center animate-pulse-glow">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <p className="text-white/60 text-xs sm:text-sm">Chart integration coming soon...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* NFT Marketplace Section - Compact & Mobile Responsive */}
+      <section 
+        id="marketplace" 
+        ref={setRef('marketplace')}
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
+          isVisible.marketplace ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        }`}
+      >
+        <div className="text-center max-w-5xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 sm:mb-3 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+            🛒 NFT Marketplace
+          </h2>
+          <p className="text-xs sm:text-sm text-white/60 mb-4 sm:mb-6 max-w-2xl mx-auto px-2">
+            Secure on-chain buying, selling & trading
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 hover:border-orange-500/60">
+              <h3 className="text-base sm:text-lg font-bold text-white mb-2">Primary Sales</h3>
+              <p className="text-xs sm:text-sm text-white/70 mb-2 sm:mb-3">
+                Brand new NFT cars with unique stats & upgrade potential
+              </p>
+              <ul className="text-[10px] sm:text-xs text-white/60 space-y-1 list-disc list-inside">
+                <li>Unique designs</li>
+                <li>Transparent pricing</li>
+                <li>Instant Sui ownership</li>
+              </ul>
+            </div>
+            
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 hover:border-orange-500/60">
+              <h3 className="text-base sm:text-lg font-bold text-white mb-2">Secondary Trading</h3>
+              <p className="text-xs sm:text-sm text-white/70 mb-2 sm:mb-3">
+                Trade with players & build your perfect racing garage
+              </p>
+              <ul className="text-[10px] sm:text-xs text-white/60 space-y-1 list-disc list-inside">
+                <li>User-to-user trades</li>
+                <li>Advanced filters</li>
+                <li>Detailed car stats</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300">
+            <h3 className="text-base sm:text-lg font-bold text-white mb-2 sm:mb-3 text-center">Marketplace Features</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {['Advanced Filters', 'Price Sorting', 'Car Stats', 'Secure Trading'].map((feature, i) => (
+                <div key={i} className="text-center p-2 bg-white/5 rounded border border-orange-500/20">
+                  <p className="text-white/90 text-[10px] sm:text-xs font-semibold">{feature}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Partnerships/Sponsors Section - Compact & Mobile Responsive */}
       <section 
         id="partnerships" 
         ref={setRef('partnerships')}
-        className={`relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-orange-500/20 transition-all duration-1000 ${
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
           isVisible.partnerships ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}
       >
         <div className="text-center">
-          <h2 className="text-5xl sm:text-6xl font-extrabold text-white mb-12 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent relative">
-            Partnerships/Sponsors
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 sm:mb-6 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+            🤝 Partnerships
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto px-2">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="glass border border-orange-500/20 rounded-xl p-8 h-32 flex items-center justify-center hover:border-orange-500/50 transition-all duration-300 hover-3d glow-orange-hover group"
+                className="glass border border-orange-500/20 rounded-lg p-3 sm:p-4 h-20 sm:h-24 flex items-center justify-center hover:border-orange-500/50 transition-all duration-300 hover-3d glow-orange-hover group"
               >
-                <div className="w-16 h-16 bg-gradient-to-r from-orange-500/20 to-orange-600/20 rounded-full flex items-center justify-center group-hover:from-orange-500/40 group-hover:to-orange-600/40 transition-all duration-300">
-                  <p className="text-white/40 group-hover:text-orange-500 text-sm font-bold transition-colors">Partner {i}</p>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500/20 to-orange-600/20 rounded-full flex items-center justify-center group-hover:from-orange-500/40 group-hover:to-orange-600/40 transition-all duration-300">
+                  <p className="text-white/40 group-hover:text-orange-500 text-[10px] sm:text-xs font-bold transition-colors">Partner {i}</p>
                 </div>
               </div>
             ))}
@@ -316,80 +418,68 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Join The Race Section */}
+      {/* Join The Race Section - Compact & Mobile Responsive */}
       <section 
         id="join" 
         ref={setRef('join')}
-        className={`relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-orange-500/20 transition-all duration-1000 ${
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
           isVisible.join ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}
       >
-        <div className="text-center max-w-4xl mx-auto">
-          <h2 className="text-5xl sm:text-6xl font-extrabold text-white mb-16 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent relative">
-            Join The Race!
+        <div className="text-center max-w-5xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+            Join The Race! 🏁
           </h2>
           
-          <div className="space-y-16">
+          {/* Steps Grid - Horizontal Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {/* Step 1 */}
-            <div className="glass border-2 border-orange-500/30 rounded-2xl p-8 text-left hover-3d transition-all duration-300 group">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-3xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform">
+            <div className="glass border-2 border-orange-500/30 rounded-lg sm:rounded-xl p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform mb-2 sm:mb-3">
                   1
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-white mb-4">Step 1</h3>
-                  <div className="space-y-3 text-white/80">
-                    <p><strong className="text-orange-500">Mobile Users:</strong> Download the Phantom app for free.</p>
-                    <p><strong className="text-orange-500">Desktop Users:</strong> Download the Phantom chrome extension</p>
-                    <p>Fund your wallet with Sui. You can buy Sui from an exchange or cross chain swap and send it to your wallet.</p>
-                  </div>
+                <h3 className="text-base sm:text-lg font-bold text-white mb-2 sm:mb-3">Setup Wallet</h3>
+                <div className="text-xs sm:text-sm text-white/80 space-y-1 sm:space-y-2">
+                  <p><strong className="text-orange-400">Mobile:</strong> Download Phantom app</p>
+                  <p><strong className="text-orange-400">Desktop:</strong> Install Phantom extension</p>
+                  <p className="text-[10px] sm:text-xs text-white/60">Fund with Sui from exchange</p>
                 </div>
               </div>
             </div>
 
             {/* Step 2 */}
-            <div className="glass border-2 border-orange-500/30 rounded-2xl p-8 text-left hover-3d transition-all duration-300 group">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-3xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform">
+            <div className="glass border-2 border-orange-500/30 rounded-lg sm:rounded-xl p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform mb-2 sm:mb-3">
                   2
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-white mb-4">Step 2</h3>
-                  <div className="space-y-3 text-white/80">
-                    <p>Go to the Blast.fun platform with your phantom browser and swap your Sui for $WHEELS</p>
-                    <div className="mt-4">
-                      <button className="group relative px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-110 shadow-lg shadow-orange-500/50 hover:shadow-orange-500/80 overflow-hidden">
-                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
-                        <span className="relative z-10">🪖 Click The Helmet Below</span>
-                      </button>
-                    </div>
-                  </div>
+                <h3 className="text-base sm:text-lg font-bold text-white mb-2 sm:mb-3">Get $WHEELS</h3>
+                <div className="text-xs sm:text-sm text-white/80 space-y-1 sm:space-y-2">
+                  <p>Swap Sui for $WHEELS on Blast.fun</p>
+                  <button className="mt-2 px-3 sm:px-4 py-1 sm:py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-[10px] sm:text-xs font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md w-full sm:w-auto">
+                    🪖 Buy $WHEELS
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Step 3 */}
-            <div className="glass border-2 border-orange-500/30 rounded-2xl p-8 text-left hover-3d transition-all duration-300 group">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-3xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform">
+            <div className="glass border-2 border-orange-500/30 rounded-lg sm:rounded-xl p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform mb-2 sm:mb-3">
                   3
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-white mb-4">Step 3</h3>
-                  <div className="space-y-3 text-white/80">
-                    <p>You're all set! Join the Telegram and Play With The bot</p>
-                    <p className="text-center text-orange-500 font-bold text-xl">Or</p>
-                    <p>Click On The Launch Pad Below to Load The Blast Wheels Game!</p>
-                    <div className="mt-4 flex flex-col sm:flex-row gap-4">
-                      <button className="group relative px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-110 shadow-lg shadow-orange-500/50 hover:shadow-orange-500/80 overflow-hidden">
-                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
-                        <span className="relative z-10">Join Telegram</span>
-                      </button>
-                      <button className="group relative px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-110 shadow-lg shadow-orange-500/50 hover:shadow-orange-500/80 overflow-hidden">
-                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
-                        <span className="relative z-10">🚀 Launch Game</span>
-                      </button>
-                    </div>
+                <h3 className="text-base sm:text-lg font-bold text-white mb-2 sm:mb-3">Start Racing</h3>
+                <div className="text-xs sm:text-sm text-white/80 space-y-1 sm:space-y-2">
+                  <p>Join Telegram & play with bot</p>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-2 justify-center">
+                    <button className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-[10px] sm:text-xs font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md">
+                      Telegram
+                    </button>
+                    <button className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-[10px] sm:text-xs font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md">
+                      🚀 Launch
+                    </button>
                   </div>
                 </div>
               </div>
@@ -398,70 +488,68 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Roadmap Section */}
+      {/* Roadmap Section - Compact & Mobile Responsive */}
       <section 
         id="roadmap" 
         ref={setRef('roadmap')}
-        className={`relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-orange-500/20 transition-all duration-1000 ${
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
           isVisible.roadmap ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}
       >
         <div className="text-center max-w-5xl mx-auto">
-          <h2 className="text-5xl sm:text-6xl font-extrabold text-white mb-16 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent relative">
-            Roadmap
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 sm:mb-6 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+            🗺️ Roadmap
           </h2>
           
-          <div className="space-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {/* Stage 1 */}
-            <div className="glass border-2 border-orange-500/30 rounded-2xl p-8 text-left hover-3d transition-all duration-300 group">
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-4xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform">
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60">
+              <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform flex-shrink-0">
                   1
                 </div>
-                <h3 className="text-3xl font-bold text-white">Stage 1</h3>
+                <h3 className="text-base sm:text-lg font-bold text-white">Stage 1</h3>
               </div>
-              <h4 className="text-xl font-semibold text-orange-500 mb-4">Early Stages & Development</h4>
-              <p className="text-white/70 mb-4"><strong className="text-white">Goal:</strong> Build the foundation and foster transparency with the community.</p>
-              <ul className="space-y-2 text-white/80 list-disc list-inside">
-                <li>Launch on Blast.fun and onboard early holders for testing + feedback.</li>
-                <li>Deploy official website and host regular Spaces to share progress.</li>
-                <li>Core development: user interface, API integrations, Telegram bot, wallet integration, sound, tracks, graphics, and backend functions.</li>
+              <h4 className="text-xs sm:text-sm font-semibold text-orange-500 mb-2">Early Development</h4>
+              <p className="text-[10px] sm:text-xs text-white/70 mb-2 sm:mb-3"><strong className="text-white">Goal:</strong> Build foundation & community</p>
+              <ul className="space-y-1 text-[10px] sm:text-xs text-white/70 list-disc list-inside">
+                <li>Launch on Blast.fun</li>
+                <li>Website deployment</li>
+                <li>Core development</li>
               </ul>
             </div>
 
             {/* Stage 2 */}
-            <div className="glass border-2 border-orange-500/30 rounded-2xl p-8 text-left hover-3d transition-all duration-300 group">
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-4xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform">
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60">
+              <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform flex-shrink-0">
                   2
                 </div>
-                <h3 className="text-3xl font-bold text-white">Stage 2</h3>
+                <h3 className="text-base sm:text-lg font-bold text-white">Stage 2</h3>
               </div>
-              <h4 className="text-xl font-semibold text-orange-500 mb-4">Community Building</h4>
-              <p className="text-white/70 mb-4"><strong className="text-white">Goal:</strong> Grow adoption and increase engagement.</p>
-              <ul className="space-y-2 text-white/80 list-disc list-inside">
-                <li>Pay DEX fees, boosts, and start targeted marketing.</li>
-                <li>Onboard influencers to play and promote Blast Wheels.</li>
-                <li>Daily Spaces, AMAs, and community tournaments for in-game activity.</li>
-                <li>Expand marketing across Telegram, Twitter/X, and Discord.</li>
+              <h4 className="text-xs sm:text-sm font-semibold text-orange-500 mb-2">Community Building</h4>
+              <p className="text-[10px] sm:text-xs text-white/70 mb-2 sm:mb-3"><strong className="text-white">Goal:</strong> Grow adoption</p>
+              <ul className="space-y-1 text-[10px] sm:text-xs text-white/70 list-disc list-inside">
+                <li>Marketing & DEX fees</li>
+                <li>Influencer onboarding</li>
+                <li>Community tournaments</li>
               </ul>
             </div>
 
             {/* Stage 3 */}
-            <div className="glass border-2 border-orange-500/30 rounded-2xl p-8 text-left hover-3d transition-all duration-300 group">
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-4xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform">
+            <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60">
+              <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform flex-shrink-0">
                   3
                 </div>
-                <h3 className="text-3xl font-bold text-white">Stage 3</h3>
+                <h3 className="text-base sm:text-lg font-bold text-white">Stage 3</h3>
               </div>
-              <h4 className="text-xl font-semibold text-orange-500 mb-4">Full Release & Expansion</h4>
-              <p className="text-white/70 mb-4"><strong className="text-white">Goal:</strong> Scale globally and integrate with mainstream gaming.</p>
-              <ul className="space-y-2 text-white/80 list-disc list-inside">
-                <li>Launch full game on PC & Mobile, with live multiplayer and Sui wallet integration.</li>
-                <li>Global marketing push: DEX Screener ads, Steam/Twitch streams, weekly influencer tournaments.</li>
-                <li>Secure major exchange listings.</li>
-                <li>Establish Blast Wheels as a strong brand in gaming, crypto, and esports.</li>
+              <h4 className="text-xs sm:text-sm font-semibold text-orange-500 mb-2">Full Release</h4>
+              <p className="text-[10px] sm:text-xs text-white/70 mb-2 sm:mb-3"><strong className="text-white">Goal:</strong> Scale globally</p>
+              <ul className="space-y-1 text-[10px] sm:text-xs text-white/70 list-disc list-inside">
+                <li>PC & Mobile launch</li>
+                <li>Global marketing</li>
+                <li>Exchange listings</li>
               </ul>
             </div>
           </div>
