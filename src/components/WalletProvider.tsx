@@ -24,6 +24,17 @@ const { networkConfig } = createNetworkConfig({
   mainnet: { url: getFullnodeUrl('mainnet') },
 });
 
+// Get default network from environment variable (client-side needs NEXT_PUBLIC_ prefix)
+// NEXT_PUBLIC_ variables are embedded at build time and available everywhere
+const getDefaultNetwork = (): 'mainnet' | 'testnet' | 'devnet' | 'localnet' => {
+  const envNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK || process.env.SUI_NETWORK;
+  if (envNetwork && ['mainnet', 'testnet', 'devnet', 'localnet'].includes(envNetwork)) {
+    return envNetwork as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  }
+  // Default to testnet if not specified
+  return 'testnet';
+};
+
 export default function AppWalletProvider({
   children,
 }: {
@@ -45,9 +56,11 @@ export default function AppWalletProvider({
     }
   }, [isRegistered]);
 
+  const defaultNetwork = getDefaultNetwork();
+
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork="mainnet">
+      <SuiClientProvider networks={networkConfig} defaultNetwork={defaultNetwork}>
         <WalletProvider autoConnect>
           {children}
         </WalletProvider>

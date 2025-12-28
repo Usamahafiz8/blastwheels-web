@@ -53,12 +53,18 @@ export default function Header() {
             >
               Features
             </a>
-            <a
-              href="#marketplace"
+            <Link
+              href="/marketplace"
               className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
             >
               Marketplace
-            </a>
+            </Link>
+            <Link
+              href="/collection"
+              className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
+            >
+              Collection
+            </Link>
             <a
               href="#join"
               className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
@@ -171,13 +177,20 @@ export default function Header() {
               >
                 Features
               </a>
-              <a
-                href="#marketplace"
+              <Link
+                href="/marketplace"
                 className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Marketplace
-              </a>
+              </Link>
+              <Link
+                href="/collection"
+                className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Collection
+              </Link>
               <a
                 href="#join"
                 className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"

@@ -23,21 +23,21 @@ enum GameStatus {
 }
 
 model User {
-  id                String    @id @default(uuid())
-  email             String?   @unique
-  username          String    @unique
-  walletAddress     String    @unique
-  role              UserRole  @default(PLAYER)
-  passwordHash      String?   // Optional for wallet-only auth
+  id                 String   @id @default(uuid())
+  email              String?  @unique
+  username           String   @unique
+  walletAddress      String   @unique
+  role               UserRole @default(PLAYER)
+  passwordHash       String? // Optional for wallet-only auth
   blastwheelzBalance Decimal  @default(0) @db.Decimal(18, 8) // In-game currency balance
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   // Relations
-  gameSessions      GameSession[]
-  transactions      Transaction[]
-  playerStats       PlayerStats?
+  gameSessions GameSession[]
+  transactions Transaction[]
+  playerStats  PlayerStats?
 
   @@index([walletAddress])
   @@index([email])
@@ -45,19 +45,19 @@ model User {
 }
 
 model PlayerStats {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalGames      Int      @default(0)
-  wins            Int      @default(0)
-  losses          Int      @default(0)
-  totalEarnings   Decimal  @default(0) @db.Decimal(18, 8)
-  totalSpent      Decimal  @default(0) @db.Decimal(18, 8)
-  rank            Int      @default(0)
-  level           Int      @default(1)
-  experience      Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalGames    Int      @default(0)
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  totalEarnings Decimal  @default(0) @db.Decimal(18, 8)
+  totalSpent    Decimal  @default(0) @db.Decimal(18, 8)
+  rank          Int      @default(0)
+  level         Int      @default(1)
+  experience    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([rank])
   @@index([level])
@@ -83,16 +83,16 @@ model GameSession {
 }
 
 model Transaction {
-  id            String   @id @default(uuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type          String   // DEPOSIT, WITHDRAWAL, GAME_ENTRY, GAME_REWARD, PURCHASE, CURRENCY_PURCHASE
-  amount        Decimal  @db.Decimal(18, 8)
-  suiTxHash     String?  @unique
-  status        String   @default("PENDING") // PENDING, COMPLETED, FAILED
-  metadata      Json?    // Additional transaction data
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // DEPOSIT, WITHDRAWAL, GAME_ENTRY, GAME_REWARD, PURCHASE, CURRENCY_PURCHASE, NFT_PURCHASE
+  amount    Decimal  @db.Decimal(18, 8)
+  suiTxHash String?  @unique
+  status    String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  metadata  Json? // Additional transaction data
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([suiTxHash])
@@ -102,20 +102,27 @@ model Transaction {
 }
 
 model NFT {
-  id            String   @id @default(uuid())
-  tokenId       String   @unique
-  ownerAddress  String
-  collectionId  String?
-  name          String
-  description   String?
-  imageUrl      String?
-  metadata      Json?
-  suiObjectId   String   @unique
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(uuid())
+  tokenId      String   @unique
+  ownerAddress String
+  collectionId String?
+  name         String
+  description  String? // Optional description (can be derived from name)
+  imageUrl     String? // Maps to image_url in Move contract
+  projectUrl   String? // Maps to project_url in Move contract
+  mintNumber   Int? // Maps to mint_number in Move contract (u64)
+  alloyRim     String? // Maps to alloy_rim in Move contract
+  frontBonnet  String? // Maps to front_bonnet in Move contract
+  backBonnet   String? // Maps to back_bonnet in Move contract
+  creator      String? // Creator address from Move contract
+  metadata     Json? // Additional metadata
+  suiObjectId  String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([ownerAddress])
   @@index([tokenId])
   @@index([suiObjectId])
+  @@index([creator])
+  @@index([mintNumber])
 }
-

@@ -65,6 +65,18 @@ import { prisma } from '@/lib/db';
  *                 type: string
  *               imageUrl:
  *                 type: string
+ *               projectUrl:
+ *                 type: string
+ *               mintNumber:
+ *                 type: integer
+ *               alloyRim:
+ *                 type: string
+ *               frontBonnet:
+ *                 type: string
+ *               backBonnet:
+ *                 type: string
+ *               creator:
+ *                 type: string
  *               metadata:
  *                 type: object
  *     responses:
@@ -138,6 +150,12 @@ export async function POST(req: NextRequest) {
       name,
       description,
       imageUrl,
+      projectUrl,
+      mintNumber,
+      alloyRim,
+      frontBonnet,
+      backBonnet,
+      creator,
       metadata,
     } = body as {
       tokenId?: string;
@@ -147,6 +165,12 @@ export async function POST(req: NextRequest) {
       name?: string;
       description?: string;
       imageUrl?: string;
+      projectUrl?: string;
+      mintNumber?: number;
+      alloyRim?: string;
+      frontBonnet?: string;
+      backBonnet?: string;
+      creator?: string;
       metadata?: Record<string, any>;
     };
 
@@ -199,6 +223,12 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         description: description?.trim() || null,
         imageUrl: imageUrl?.trim() || null,
+        projectUrl: projectUrl?.trim() || null,
+        mintNumber: mintNumber || null,
+        alloyRim: alloyRim?.trim() || null,
+        frontBonnet: frontBonnet?.trim() || null,
+        backBonnet: backBonnet?.trim() || null,
+        creator: creator?.trim() || null,
         metadata: metadata ?? undefined,
       },
     });

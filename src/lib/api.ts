@@ -390,6 +390,107 @@ class ApiClient {
       offset: number;
     }>(`/currency/history${query}`);
   }
+
+  // Car/NFT endpoints
+  async getCars(params?: {
+    ownerAddress?: string;
+    collectionId?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const queryParams = new URLSearchParams();
+    if (params?.ownerAddress) queryParams.append('ownerAddress', params.ownerAddress);
+    if (params?.collectionId) queryParams.append('collectionId', params.collectionId);
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    return this.request<{ cars: any[]; pagination: any }>(`/cars${query}`);
+  }
+
+  async getCar(id: string) {
+    return this.request<{ car: any }>(`/cars/${id}`);
+  }
+
+  async createCar(payload: {
+    tokenId: string;
+    suiObjectId: string;
+    ownerAddress?: string;
+    collectionId?: string;
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    projectUrl?: string;
+    mintNumber?: number;
+    alloyRim?: string;
+    frontBonnet?: string;
+    backBonnet?: string;
+    creator?: string;
+    metadata?: Record<string, any>;
+  }) {
+    return this.request<{ message: string; car: any }>('/cars', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async registerMintedCar(payload: {
+    tokenId: string;
+    suiObjectId: string;
+    ownerAddress: string;
+    name: string;
+    description?: string;
+    imageUrl: string;
+    projectUrl: string;
+    mintNumber: number;
+    alloyRim: string;
+    frontBonnet: string;
+    backBonnet: string;
+    creator: string;
+    collectionId?: string;
+    metadata?: Record<string, any>;
+  }) {
+    return this.createCar(payload);
+  }
+
+  async purchaseCar(id: string, payload: { suiTxHash: string }) {
+    return this.request<{
+      message: string;
+      car: any;
+      transaction: {
+        id: string;
+        suiTxHash: string;
+        type: string;
+        status: string;
+      };
+    }>(`/cars/${id}/purchase`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async registerMintedCar(payload: {
+    tokenId: string;
+    suiObjectId: string;
+    ownerAddress: string;
+    name: string;
+    description?: string;
+    imageUrl: string;
+    projectUrl: string;
+    mintNumber: number;
+    alloyRim: string;
+    frontBonnet: string;
+    backBonnet: string;
+    creator: string;
+    collectionId?: string;
+    metadata?: Record<string, any>;
+  }) {
+    return this.request<{ message: string; car: any }>('/cars', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

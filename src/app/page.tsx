@@ -3,11 +3,17 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Toast from '@/components/Toast';
+import { NFT_CARS } from '@/lib/nft-cars';
 
 // Deterministic random function based on seed (index)
 function seededRandom(seed: number) {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
+}
+
+// Round to fixed precision to avoid hydration mismatches
+function roundToFixed(num: number, decimals: number = 5): number {
+  return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
 export default function Home() {
@@ -75,12 +81,12 @@ export default function Home() {
               key={i}
               className="star absolute bg-white rounded-full"
               style={{
-                left: `${seededRandom(seed) * 100}%`,
-                top: `${seededRandom(seed + 1) * 100}%`,
-                width: `${seededRandom(seed + 2) * 3 + 1}px`,
-                height: `${seededRandom(seed + 3) * 3 + 1}px`,
-                animationDelay: `${seededRandom(seed + 4) * 3}s`,
-                animationDuration: `${2 + seededRandom(seed + 5) * 3}s`,
+                left: `${roundToFixed(seededRandom(seed) * 100, 4)}%`,
+                top: `${roundToFixed(seededRandom(seed + 1) * 100, 4)}%`,
+                width: `${roundToFixed(seededRandom(seed + 2) * 3 + 1, 5)}px`,
+                height: `${roundToFixed(seededRandom(seed + 3) * 3 + 1, 5)}px`,
+                animationDelay: `${roundToFixed(seededRandom(seed + 4) * 3, 6)}s`,
+                animationDuration: `${roundToFixed(2 + seededRandom(seed + 5) * 3, 6)}s`,
               }}
             />
           );
@@ -109,10 +115,10 @@ export default function Home() {
               key={`particle-${i}`}
               className="particle absolute w-2 h-2 bg-orange-500/30 rounded-full"
               style={{
-                left: `${seededRandom(seed) * 100}%`,
-                top: `${100 + seededRandom(seed + 1) * 20}%`,
-                animationDelay: `${seededRandom(seed + 2) * 5}s`,
-                animationDuration: `${15 + seededRandom(seed + 3) * 10}s`,
+                left: `${roundToFixed(seededRandom(seed) * 100, 4)}%`,
+                top: `${roundToFixed(100 + seededRandom(seed + 1) * 20, 4)}%`,
+                animationDelay: `${roundToFixed(seededRandom(seed + 2) * 5, 6)}s`,
+                animationDuration: `${roundToFixed(15 + seededRandom(seed + 3) * 10, 6)}s`,
               }}
             />
           );
@@ -170,12 +176,12 @@ export default function Home() {
             >
               <span className="relative z-10">🚀 Start Racing</span>
             </Link>
-            <a
-              href="#marketplace"
+            <Link
+              href="/marketplace"
               className="group relative px-6 py-2.5 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 border border-orange-500/30 text-sm sm:text-base"
             >
               <span className="relative z-10">🛒 NFT Marketplace</span>
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -336,7 +342,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* NFT Marketplace Section - Compact & Mobile Responsive */}
+      {/* NFT Marketplace Section - Link to Marketplace Page */}
       <section 
         id="marketplace" 
         ref={setRef('marketplace')}
@@ -352,7 +358,7 @@ export default function Home() {
             Secure on-chain buying, selling & trading
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 hover:border-orange-500/60">
               <h3 className="text-base sm:text-lg font-bold text-white mb-2">Primary Sales</h3>
               <p className="text-xs sm:text-sm text-white/70 mb-2 sm:mb-3">
@@ -378,15 +384,56 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300">
-            <h3 className="text-base sm:text-lg font-bold text-white mb-2 sm:mb-3 text-center">Marketplace Features</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {['Advanced Filters', 'Price Sorting', 'Car Stats', 'Secure Trading'].map((feature, i) => (
-                <div key={i} className="text-center p-2 bg-white/5 rounded border border-orange-500/20">
-                  <p className="text-white/90 text-[10px] sm:text-xs font-semibold">{feature}</p>
+          <Link
+            href="/marketplace"
+            className="inline-block px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-orange-500/50 text-base sm:text-lg"
+          >
+            Explore Marketplace →
+          </Link>
+        </div>
+      </section>
+
+      {/* NFT Showcase Section */}
+      <section 
+        id="nfts" 
+        ref={setRef('nfts')}
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
+          isVisible.nfts ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        }`}
+      >
+        <div className="text-center max-w-7xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 sm:mb-3 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+            🚗 NFT Collection
+          </h2>
+          <p className="text-xs sm:text-sm text-white/60 mb-4 sm:mb-6 max-w-2xl mx-auto px-2">
+            Limited edition NFT cars ready for the track
+          </p>
+          
+          {/* NFT Cars Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {NFT_CARS.map((car, index) => (
+              <div
+                key={index}
+                className="glass border-2 border-orange-500/30 rounded-lg overflow-hidden hover-3d transition-all duration-300 hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20 group"
+              >
+                <div className="relative aspect-square overflow-hidden bg-black">
+                  <img
+                    src={`/${car.image}`}
+                    alt={car.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
                 </div>
-              ))}
-            </div>
+                <div className="p-4 sm:p-5">
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-white mb-2 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+                    {car.name}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/80 leading-relaxed line-clamp-4">
+                    {car.description}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
