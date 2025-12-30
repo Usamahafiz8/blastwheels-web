@@ -30,7 +30,7 @@ export default function MarketplacePage() {
   const [blastwheelzBalance, setBlastwheelzBalance] = useState<string>('0');
   const [toast, setToast] = useState({ message: '', isVisible: false, type: 'success' as 'success' | 'error' });
   const [filter, setFilter] = useState<{
-    status?: string;
+    status?: 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT';
     type?: string;
     category?: string;
     search?: string;
@@ -211,7 +211,7 @@ export default function MarketplacePage() {
             </select>
             <select
               value={filter.status || 'ACTIVE'}
-              onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+              onChange={(e) => setFilter({ ...filter, status: e.target.value as 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT' })}
               className="px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white focus:outline-none focus:border-orange-500/60"
             >
               <option value="ACTIVE">Active</option>

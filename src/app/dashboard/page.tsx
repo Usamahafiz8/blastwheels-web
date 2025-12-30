@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
-import { Transaction } from '@mysten/sui/transactions';
+import { Transaction as SuiTransaction } from '@mysten/sui/transactions';
 import { SUI_CONFIG } from '@/lib/sui';
 import Toast from '@/components/Toast';
 
@@ -39,7 +39,7 @@ interface MarketplacePurchase {
   createdAt: string;
 }
 
-interface Transaction {
+interface TransactionRecord {
   id: string;
   type: string;
   amount: string;
@@ -75,7 +75,7 @@ export default function DashboardPage() {
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [purchases, setPurchases] = useState<MarketplacePurchase[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false, type: 'success' as 'success' | 'error' });
 
   const walletMismatch =
@@ -160,7 +160,7 @@ export default function DashboardPage() {
 
         if (txDetails.data?.treasuryAddress) {
           // Build transaction
-          const tx = new Transaction();
+          const tx = new SuiTransaction();
           const amountInSmallestUnit = BigInt(Math.floor(parseFloat(purchaseAmount) * 1_000_000_000));
 
           // Get user's WHEELS coins (game token)

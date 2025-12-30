@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 /**
  * @swagger
@@ -175,7 +176,7 @@ export async function POST(req: NextRequest) {
         type,
         stock: stock !== undefined ? stock : null,
         category: category?.trim() || null,
-        metadata: metadata || null,
+        metadata: metadata ? metadata : Prisma.JsonNull,
         createdBy: admin.id,
       },
     });

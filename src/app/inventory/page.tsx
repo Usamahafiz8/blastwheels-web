@@ -17,6 +17,9 @@ interface NFT {
   isPurchase?: boolean; // Flag for marketplace purchases
   purchaseId?: string;
   purchaseDate?: string;
+  itemType?: string;
+  purchasePrice?: string;
+  quantity?: number;
 }
 
 interface MarketplacePurchase {

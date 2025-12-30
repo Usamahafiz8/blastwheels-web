@@ -500,25 +500,6 @@ class ApiClient {
     });
   }
 
-  async registerMintedCar(payload: {
-    tokenId: string;
-    suiObjectId: string;
-    ownerAddress: string;
-    name: string;
-    description?: string;
-    imageUrl: string;
-    projectUrl: string;
-    mintNumber: number;
-    alloyRim: string;
-    frontBonnet: string;
-    backBonnet: string;
-    creator: string;
-    collectionId?: string;
-    metadata?: Record<string, any>;
-  }) {
-    return this.createCar(payload);
-  }
-
   async purchaseCar(id: string, payload: { suiTxHash: string }) {
     return this.request<{
       message: string;

@@ -92,12 +92,13 @@ export async function getNFTOwner(nftObjectId: string): Promise<string | null> {
     });
 
     if (object.data?.owner) {
-      if ('AddressOwner' in object.data.owner) {
-        return object.data.owner.AddressOwner;
+      const owner = object.data.owner as any;
+      if (owner && typeof owner === 'object' && 'AddressOwner' in owner) {
+        return owner.AddressOwner;
       }
       // Handle other owner types (shared object, immutable, etc.)
-      if ('ObjectOwner' in object.data.owner) {
-        return object.data.owner.ObjectOwner;
+      if (owner && typeof owner === 'object' && 'ObjectOwner' in owner) {
+        return owner.ObjectOwner;
       }
     }
 

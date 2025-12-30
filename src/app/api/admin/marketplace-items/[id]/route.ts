@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 /**
  * @swagger
@@ -119,7 +120,7 @@ export async function PUT(
     if (type !== undefined) updateData.type = type;
     if (stock !== undefined) updateData.stock = stock !== null ? stock : null;
     if (category !== undefined) updateData.category = category?.trim() || null;
-    if (metadata !== undefined) updateData.metadata = metadata;
+    if (metadata !== undefined) updateData.metadata = metadata ? metadata : Prisma.JsonNull;
 
     // Auto-update status to SOLD_OUT if stock reaches 0
     if (updateData.stock === 0) {
