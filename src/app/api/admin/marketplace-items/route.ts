@@ -86,17 +86,19 @@ export async function GET(req: NextRequest) {
  *           schema:
  *             type: object
  *             required:
- *               - name
- *               - price
+ *               - imageUrl
  *             properties:
  *               name:
  *                 type: string
+ *                 description: Optional - defaults to "Untitled Item" if not provided
  *               description:
  *                 type: string
  *               imageUrl:
  *                 type: string
+ *                 description: Required - URL or path to the item image
  *               price:
  *                 type: number
+ *                 description: Optional - defaults to 0 if not provided
  *               status:
  *                 type: string
  *                 enum: [ACTIVE, INACTIVE, SOLD_OUT]
@@ -145,26 +147,30 @@ export async function POST(req: NextRequest) {
       metadata?: Record<string, any>;
     };
 
-    if (!name || !name.trim()) {
+    // Only imageUrl is required
+    if (!imageUrl || !imageUrl.trim()) {
       return NextResponse.json(
-        { error: 'Name is required' },
+        { error: 'Image URL is required' },
         { status: 400 }
       );
     }
 
-    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) {
-      return NextResponse.json(
-        { error: 'Valid price is required' },
-        { status: 400 }
-      );
+    // Validate price only if provided
+    if (price !== undefined && price !== null) {
+      if (isNaN(Number(price)) || Number(price) < 0) {
+        return NextResponse.json(
+          { error: 'Price must be a valid positive number' },
+          { status: 400 }
+        );
+      }
     }
 
     const item = await prisma.marketplaceItem.create({
       data: {
-        name: name.trim(),
+        name: name?.trim() || 'Untitled Item',
         description: description?.trim() || null,
-        imageUrl: imageUrl?.trim() || null,
-        price: Number(price),
+        imageUrl: imageUrl.trim(),
+        price: price !== undefined && price !== null ? Number(price) : 0,
         status,
         type,
         stock: stock !== undefined ? stock : null,

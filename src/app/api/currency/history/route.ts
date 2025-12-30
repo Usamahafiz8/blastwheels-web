@@ -62,10 +62,8 @@ export async function GET(req: NextRequest) {
       whereClause.type = 'CURRENCY_PURCHASE';
     } else if (transactionType === 'withdrawal') {
       whereClause.type = 'WITHDRAWAL';
-    } else {
-      // Get both purchase and withdrawal transactions
-      whereClause.type = { in: ['CURRENCY_PURCHASE', 'WITHDRAWAL'] };
     }
+    // If no type filter, get all transaction types
 
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
@@ -86,10 +84,7 @@ export async function GET(req: NextRequest) {
         },
       }),
       prisma.transaction.count({
-        where: {
-          userId: user.id,
-          type: 'CURRENCY_PURCHASE',
-        },
+        where: whereClause,
       }),
     ]);
 

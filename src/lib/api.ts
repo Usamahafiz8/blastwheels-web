@@ -193,6 +193,30 @@ class ApiClient {
     );
   }
 
+  async getUserPurchases(limit?: number, offset?: number) {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    if (offset) params.append('offset', offset.toString());
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<{
+      purchases: Array<{
+        id: string;
+        item: {
+          id: string;
+          name: string;
+          imageUrl: string | null;
+          price: string;
+          type: string;
+          category: string | null;
+        };
+        quantity: number;
+        price: string;
+        createdAt: string;
+      }>;
+      total: number;
+    }>(`/users/purchases${query}`);
+  }
+
   // Game endpoints
   async createGame(entryFee: number) {
     return this.request<{ gameSession: any }>('/games/create', {
@@ -409,6 +433,27 @@ class ApiClient {
       limit: number;
       offset: number;
     }>(`/currency/history${query}`);
+  }
+
+  async adjustCurrency(payload: {
+    amount: number; // Positive to add, negative to subtract
+    reason?: string;
+  }) {
+    return this.request<{
+      message: string;
+      balance: string;
+      previousBalance: string;
+      adjustment: number;
+      transaction: {
+        id: string;
+        type: string;
+        amount: string;
+        status: string;
+      };
+    }>('/currency/adjust', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   // Car/NFT endpoints

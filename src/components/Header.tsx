@@ -65,6 +65,14 @@ export default function Header() {
             >
               Collection
             </Link>
+            {user && (
+              <Link
+                href="/inventory"
+                className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
+              >
+                Inventory
+              </Link>
+            )}
             <a
               href="#join"
               className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
@@ -97,6 +105,13 @@ export default function Header() {
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       Dashboard
+                    </Link>
+                    <Link
+                      href="/inventory"
+                      className="block px-4 py-2 text-sm text-white/80 hover:text-orange-500 hover:bg-orange-500/10 transition-colors"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Inventory
                     </Link>
                     {isAdmin && (
                       <Link
@@ -191,6 +206,15 @@ export default function Header() {
               >
                 Collection
               </Link>
+              {user && (
+                <Link
+                  href="/inventory"
+                  className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Inventory
+                </Link>
+              )}
               <a
                 href="#join"
                 className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
@@ -206,6 +230,13 @@ export default function Header() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/inventory"
+                    className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Inventory
                   </Link>
                   {isAdmin && (
                     <Link

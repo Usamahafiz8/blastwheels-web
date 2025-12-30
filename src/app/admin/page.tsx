@@ -346,13 +346,24 @@ function ItemModal({
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-white/80 text-sm font-medium mb-1">Name *</label>
+            <label className="block text-white/80 text-sm font-medium mb-1">Image URL *</label>
             <input
               type="text"
               required
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              className="w-full px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white focus:outline-none focus:border-orange-500/60"
+              placeholder="e.g., /image1.jpeg or https://example.com/image.jpg"
+            />
+          </div>
+          <div>
+            <label className="block text-white/80 text-sm font-medium mb-1">Name</label>
+            <input
+              type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white focus:outline-none focus:border-orange-500/60"
+              placeholder="Optional - defaults to 'Untitled Item'"
             />
           </div>
           <div>
@@ -362,28 +373,20 @@ function ItemModal({
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
               className="w-full px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white focus:outline-none focus:border-orange-500/60"
-            />
-          </div>
-          <div>
-            <label className="block text-white/80 text-sm font-medium mb-1">Image URL</label>
-            <input
-              type="text"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              className="w-full px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white focus:outline-none focus:border-orange-500/60"
+              placeholder="Optional description"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-white/80 text-sm font-medium mb-1">Price (blastwheelz) *</label>
+              <label className="block text-white/80 text-sm font-medium mb-1">Price (blastwheelz)</label>
               <input
                 type="number"
-                required
                 step="0.01"
                 min="0"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 className="w-full px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white focus:outline-none focus:border-orange-500/60"
+                placeholder="Optional - defaults to 0"
               />
             </div>
             <div>
