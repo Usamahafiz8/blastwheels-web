@@ -48,11 +48,31 @@ class ApiClient {
         headers,
       });
 
-      const data = await response.json();
+      // Check content type before parsing JSON
+      const contentType = response.headers.get('content-type');
+      let data: any;
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          // If JSON parsing fails, return error with response text
+          const text = await response.text();
+          return {
+            error: text || 'Invalid JSON response',
+          };
+        }
+      } else {
+        // Non-JSON response (e.g., plain text error)
+        const text = await response.text();
+        return {
+          error: text || `HTTP ${response.status}: ${response.statusText}`,
+        };
+      }
 
       if (!response.ok) {
         return {
-          error: data.error || 'An error occurred',
+          error: data.error || data.message || 'An error occurred',
         };
       }
 
@@ -489,6 +509,149 @@ class ApiClient {
     return this.request<{ message: string; car: any }>('/cars', {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  }
+
+  // Marketplace endpoints (public)
+  async getMarketplaceItems(params?: {
+    status?: 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT';
+    type?: string;
+    category?: string;
+    search?: string;
+  }) {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.type) queryParams.append('type', params.type);
+    if (params?.category) queryParams.append('category', params.category);
+    if (params?.search) queryParams.append('search', params.search);
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    return this.request<{
+      items: Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        imageUrl: string | null;
+        price: string;
+        status: string;
+        type: string;
+        stock: number | null;
+        category: string | null;
+        soldCount: number;
+        createdAt: string;
+      }>;
+    }>(`/marketplace/items${query}`);
+  }
+
+  async getMarketplaceItem(id: string) {
+    return this.request<{
+      item: {
+        id: string;
+        name: string;
+        description: string | null;
+        imageUrl: string | null;
+        price: string;
+        status: string;
+        type: string;
+        stock: number | null;
+        category: string | null;
+        soldCount: number;
+        createdAt: string;
+      };
+    }>(`/marketplace/items/${id}`);
+  }
+
+  async purchaseMarketplaceItem(id: string, payload: { quantity?: number }) {
+    return this.request<{
+      message: string;
+      purchase: {
+        id: string;
+        itemName: string;
+        quantity: number;
+        totalPrice: number;
+        remainingBalance: string;
+      };
+    }>(`/marketplace/items/${id}/purchase`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // Admin marketplace endpoints
+  async getAdminMarketplaceItems(params?: {
+    status?: 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT';
+    type?: string;
+    category?: string;
+  }) {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.type) queryParams.append('type', params.type);
+    if (params?.category) queryParams.append('category', params.category);
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    return this.request<{
+      items: Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        imageUrl: string | null;
+        price: string;
+        status: string;
+        type: string;
+        stock: number | null;
+        category: string | null;
+        soldCount: number;
+        createdBy: string;
+        createdAt: string;
+        _count: { purchases: number };
+      }>;
+    }>(`/admin/marketplace-items${query}`);
+  }
+
+  async createMarketplaceItem(payload: {
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    price: number;
+    status?: 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT';
+    type?: 'NFT' | 'ITEM' | 'UPGRADE' | 'CURRENCY' | 'OTHER';
+    stock?: number;
+    category?: string;
+    metadata?: Record<string, any>;
+  }) {
+    return this.request<{
+      message: string;
+      item: any;
+    }>('/admin/marketplace-items', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateMarketplaceItem(
+    id: string,
+    payload: {
+      name?: string;
+      description?: string;
+      imageUrl?: string;
+      price?: number;
+      status?: 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT';
+      type?: 'NFT' | 'ITEM' | 'UPGRADE' | 'CURRENCY' | 'OTHER';
+      stock?: number;
+      category?: string;
+      metadata?: Record<string, any>;
+    }
+  ) {
+    return this.request<{
+      message: string;
+      item: any;
+    }>(`/admin/marketplace-items/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async deleteMarketplaceItem(id: string) {
+    return this.request<{ message: string }>(`/admin/marketplace-items/${id}`, {
+      method: 'DELETE',
     });
   }
 }

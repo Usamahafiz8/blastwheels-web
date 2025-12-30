@@ -35,9 +35,10 @@ model User {
   updatedAt          DateTime @updatedAt
 
   // Relations
-  gameSessions GameSession[]
-  transactions Transaction[]
-  playerStats  PlayerStats?
+  gameSessions         GameSession[]
+  transactions         Transaction[]
+  playerStats          PlayerStats?
+  marketplacePurchases MarketplacePurchase[]
 
   @@index([walletAddress])
   @@index([email])
@@ -125,4 +126,60 @@ model NFT {
   @@index([suiObjectId])
   @@index([creator])
   @@index([mintNumber])
+}
+
+enum MarketplaceItemStatus {
+  ACTIVE
+  INACTIVE
+  SOLD_OUT
+}
+
+enum MarketplaceItemType {
+  NFT
+  ITEM
+  UPGRADE
+  CURRENCY
+  OTHER
+}
+
+model MarketplaceItem {
+  id          String                @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+  price       Decimal               @db.Decimal(18, 8) // Price in blastwheelz
+  status      MarketplaceItemStatus @default(ACTIVE)
+  type        MarketplaceItemType   @default(ITEM)
+  stock       Int? // null = unlimited, number = limited stock
+  soldCount   Int                   @default(0) // Track how many sold
+  category    String? // Optional category for filtering
+  metadata    Json? // Additional item data (e.g., NFT details, upgrade specs)
+  createdBy   String // Admin user ID who created this
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  // Relations
+  purchases MarketplacePurchase[]
+
+  @@index([status])
+  @@index([type])
+  @@index([category])
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+model MarketplacePurchase {
+  id        String          @id @default(uuid())
+  itemId    String
+  item      MarketplaceItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  price     Decimal         @db.Decimal(18, 8) // Price at time of purchase
+  quantity  Int             @default(1)
+  metadata  Json? // Additional purchase data
+  createdAt DateTime        @default(now())
+
+  @@index([itemId])
+  @@index([userId])
+  @@index([createdAt])
 }

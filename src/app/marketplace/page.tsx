@@ -2,291 +2,161 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
-import { Transaction } from '@mysten/sui/transactions';
 import { apiClient } from '@/lib/api';
-import { NFT_CARS } from '@/lib/nft-cars';
-import { buildMintTransaction, getCarTypeFromName, COLLECTION_ID, TRANSFER_POLICY_ID } from '@/lib/nft-mint';
-import { suiClient } from '@/lib/sui';
 import Toast from '@/components/Toast';
 
-interface CarData {
-  id?: string;
+interface MarketplaceItem {
+  id: string;
   name: string;
-  description: string;
-  image: string;
-  suiObjectId?: string;
-  tokenId?: string;
-  ownerAddress?: string;
-  price?: string;
+  description: string | null;
+  imageUrl: string | null;
+  price: string;
+  status: string;
+  type: string;
+  stock: number | null;
+  category: string | null;
+  soldCount: number;
+  createdAt: string;
 }
 
 export default function MarketplacePage() {
   const { user } = useAuth();
-  const account = useCurrentAccount();
-  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
-  const [cars, setCars] = useState<CarData[]>([]);
+  const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCar, setSelectedCar] = useState<CarData | null>(null);
-  const [showMintModal, setShowMintModal] = useState(false);
-  const [minting, setMinting] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [blastwheelzBalance, setBlastwheelzBalance] = useState<string>('0');
   const [toast, setToast] = useState({ message: '', isVisible: false, type: 'success' as 'success' | 'error' });
+  const [filter, setFilter] = useState<{
+    status?: string;
+    type?: string;
+    category?: string;
+    search?: string;
+  }>({ status: 'ACTIVE' });
 
   useEffect(() => {
-    loadCars();
-  }, []);
+    loadItems();
+    if (user) {
+      loadBalance();
+    }
+  }, [user, filter]);
 
-  const loadCars = async () => {
+  const loadItems = async () => {
     try {
-      // Start with static NFT_CARS as base (all available cars for minting)
-      const baseCars: CarData[] = NFT_CARS.map((car) => ({
-        name: car.name,
-        description: car.description,
-        image: car.image,
-      }));
-
-      // Try to load minted cars from API to mark which ones are already minted
-      try {
-        const response = await apiClient.getCars({ limit: 100 });
-        
-        if (response.data?.cars && response.data.cars.length > 0) {
-          // Convert API cars to CarData format
-          const apiCars: CarData[] = response.data.cars.map((car: any) => ({
-            id: car.id,
-            name: car.name,
-            description: car.description || '',
-            image: car.imageUrl || '',
-            suiObjectId: car.suiObjectId,
-            tokenId: car.tokenId,
-            ownerAddress: car.ownerAddress,
-          }));
-
-          // Merge API cars with base cars
-          // Only mark as minted if it has a suiObjectId (blockchain object ID)
-          const mergedCars = baseCars.map((baseCar) => {
-            const apiCar = apiCars.find((apiCar) => 
-              apiCar.name === baseCar.name
-            );
-            
-            // Only use API data if it has a suiObjectId (actually minted on blockchain)
-            // Otherwise, use base data (available for minting)
-            if (apiCar && apiCar.suiObjectId) {
-              return apiCar;
-            }
-            return baseCar;
-          });
-
-          setCars(mergedCars);
-        } else {
-          // No API cars, use static data only (all available for minting)
-          setCars(baseCars);
-        }
-      } catch (apiError) {
-        console.error('Failed to load cars from API:', apiError);
-        // Use static data if API fails (all available for minting)
-        setCars(baseCars);
+      setLoading(true);
+      const response = await apiClient.getMarketplaceItems(filter);
+      if (response.data) {
+        setItems(response.data.items);
+      } else {
+        setToast({
+          message: response.error || 'Failed to load marketplace items',
+          isVisible: true,
+          type: 'error',
+        });
       }
-    } catch (error) {
-      console.error('Failed to load cars:', error);
-      // Fallback to static data on error
-      setCars(NFT_CARS.map((car) => ({
-        name: car.name,
-        description: car.description,
-        image: car.image,
-      })));
+    } catch (error: any) {
+      console.error('Failed to load items:', error);
+      setToast({
+        message: 'Failed to load marketplace items',
+        isVisible: true,
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBuyClick = (car: CarData) => {
-    if (!user || !account?.address) {
-      setToast({
-        message: 'Please connect your wallet and login to mint',
-        isVisible: true,
-        type: 'error',
-      });
-      return;
+  const loadBalance = async () => {
+    try {
+      const response = await apiClient.getBlastwheelzBalance();
+      if (response.data) {
+        setBlastwheelzBalance(response.data.balance);
+      }
+    } catch (error) {
+      console.error('Failed to load balance:', error);
     }
-
-    // If car already exists on blockchain (minted), show message and redirect to collection
-    // Only check suiObjectId - this indicates the NFT exists on the blockchain
-    if (car.suiObjectId) {
-      setToast({
-        message: 'This NFT is already minted. View it in your Collection.',
-        isVisible: true,
-        type: 'success',
-      });
-      // Redirect to collection page after 2 seconds
-      setTimeout(() => {
-        window.location.href = '/collection';
-      }, 2000);
-      return;
-    }
-
-    setSelectedCar(car);
-    setShowMintModal(true);
   };
 
-  const handleMint = async () => {
-    if (!selectedCar || !account?.address) return;
-
-    setMinting(true);
-    try {
-      // Build mint transaction
-      const tx = buildMintTransaction({
-        carType: selectedCar.name,
-        collectionId: COLLECTION_ID,
-        transferPolicyId: TRANSFER_POLICY_ID,
-        name: selectedCar.name,
-        imageUrl: selectedCar.image.startsWith('/') ? selectedCar.image : `/${selectedCar.image}`,
-        projectUrl: 'https://blastwheels.com', // Default project URL
-        alloyRim: 'Default', // These can be customized later
-        frontBonnet: 'Default',
-        backBonnet: 'Default',
-        ownerAddress: account.address,
-      });
-
-      // Execute transaction with options to get objectChanges (same as script)
-      signAndExecute(
-        {
-          transaction: tx,
-          options: {
-            showObjectChanges: true,
-            showEffects: true,
-            showEvents: true,
-            showBalanceChanges: true,
-            showInput: true,
-          },
-        },
-        {
-          onSuccess: async (result) => {
-            const txHash = result.digest;
-            
-            try {
-              // Log full result for debugging
-              console.log('Transaction result:', result);
-              
-              // onSuccess callback is only called when transaction succeeds
-              // Proceed with extracting NFT information
-
-              // Use objectChanges directly from result (same as script - no need to refetch)
-              const objectChanges = result.objectChanges || [];
-              
-              // Find shared kiosk (same as script)
-              const sharedKiosk = objectChanges.find((change: any) => {
-                const isKiosk = change.objectType?.includes('kiosk::Kiosk');
-                const isShared = change.owner && 'Shared' in change.owner;
-                return isKiosk && isShared;
-              });
-
-              // Find created NFT (same as script)
-              const createdNFT = objectChanges.find(
-                (change: any) => change.type === 'created' && change.objectType?.includes('::blastwheelz::NFT')
-              );
-
-              // Find created kiosk owner cap (same as script)
-              const createdKioskCap = objectChanges.find(
-                (change: any) => change.type === 'created' && change.objectType?.includes('kiosk::KioskOwnerCap')
-              );
-
-              // Extract NFT object ID
-              let nftObjectId: string | null = null;
-              
-              if (createdNFT?.objectId) {
-                nftObjectId = createdNFT.objectId;
-              } else if (sharedKiosk?.objectId) {
-                // Use kiosk ID as reference if NFT not found directly
-                nftObjectId = sharedKiosk.objectId;
-              } else {
-                // Fallback: use transaction hash
-                nftObjectId = txHash;
-              }
-              
-              // Create car record in database
-              const createResponse = await apiClient.registerMintedCar({
-                tokenId: nftObjectId, // Use object ID as token ID
-                suiObjectId: nftObjectId,
-                ownerAddress: account.address,
-                name: selectedCar.name,
-                description: selectedCar.description,
-                imageUrl: selectedCar.image.startsWith('/') ? selectedCar.image : `/${selectedCar.image}`,
-                projectUrl: 'https://blastwheels.com',
-                mintNumber: 1, // This should be retrieved from the collection if possible
-                alloyRim: 'Default',
-                frontBonnet: 'Default',
-                backBonnet: 'Default',
-                creator: account.address,
-                collectionId: COLLECTION_ID,
-              });
-
-              if (createResponse.error) {
-                setToast({
-                  message: `Mint successful but failed to register: ${createResponse.error}`,
-                  isVisible: true,
-                  type: 'error',
-                });
-              } else {
-                setToast({
-                  message: 'NFT minted successfully!',
-                  isVisible: true,
-                  type: 'success',
-                });
-                setShowMintModal(false);
-                loadCars();
-              }
-            } catch (error: any) {
-              console.error('Error registering minted NFT:', error);
-              setToast({
-                message: `Mint successful but failed to register: ${error.message}`,
-                isVisible: true,
-                type: 'error',
-              });
-            } finally {
-              setMinting(false);
-            }
-          },
-          onError: (error: any) => {
-            console.error('Mint transaction error:', error);
-            console.error('Full error details:', JSON.stringify(error, null, 2));
-            
-            // Extract more detailed error message
-            let errorMessage = 'Unknown error';
-            if (error.message) {
-              errorMessage = error.message;
-            } else if (error.toString && error.toString() !== '[object Object]') {
-              errorMessage = error.toString();
-            } else if (error.code) {
-              errorMessage = `Error code: ${error.code}`;
-            }
-            
-            // Check for common Sui transaction errors
-            if (errorMessage.includes('Invalid identifier')) {
-              errorMessage = 'Invalid function identifier. Check package ID and module name.';
-            } else if (errorMessage.includes('does not exist')) {
-              errorMessage = 'Object does not exist. Check Collection ID and Transfer Policy ID.';
-            } else if (errorMessage.includes('insufficient gas')) {
-              errorMessage = 'Insufficient gas. Please add more SUI to your wallet.';
-            }
-            
-            setToast({
-              message: `Mint failed: ${errorMessage}`,
-              isVisible: true,
-              type: 'error',
-            });
-            setMinting(false);
-          },
-        }
-      );
-    } catch (error: any) {
-      console.error('Mint error:', error);
+  const handlePurchaseClick = (item: MarketplaceItem) => {
+    if (!user) {
       setToast({
-        message: error.message || 'Failed to build mint transaction',
+        message: 'Please login to purchase items',
         isVisible: true,
         type: 'error',
       });
-      setMinting(false);
+      return;
     }
+
+    if (item.status !== 'ACTIVE') {
+      setToast({
+        message: 'This item is not available for purchase',
+        isVisible: true,
+        type: 'error',
+      });
+      return;
+    }
+
+    setSelectedItem(item);
+    setQuantity(1);
+    setShowPurchaseModal(true);
+  };
+
+  const handlePurchase = async () => {
+    if (!selectedItem || !user) return;
+
+    setPurchasing(true);
+    try {
+      const response = await apiClient.purchaseMarketplaceItem(selectedItem.id, {
+        quantity,
+      });
+
+      if (response.error) {
+        setToast({
+          message: response.error,
+          isVisible: true,
+          type: 'error',
+        });
+      } else if (response.data) {
+        setToast({
+          message: `Successfully purchased ${quantity}x ${selectedItem.name}!`,
+          isVisible: true,
+          type: 'success',
+        });
+        setShowPurchaseModal(false);
+        setSelectedItem(null);
+        // Reload items and balance
+        await Promise.all([loadItems(), loadBalance()]);
+      }
+    } catch (error: any) {
+      console.error('Purchase error:', error);
+      setToast({
+        message: error.message || 'Failed to purchase item',
+        isVisible: true,
+        type: 'error',
+      });
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const getMaxQuantity = () => {
+    if (!selectedItem) return 1;
+    if (selectedItem.stock === null) return 999; // Unlimited
+    return selectedItem.stock;
+  };
+
+  const getTotalPrice = () => {
+    if (!selectedItem) return 0;
+    return Number(selectedItem.price) * quantity;
+  };
+
+  const canPurchase = () => {
+    if (!selectedItem || !user) return false;
+    const balance = Number(blastwheelzBalance);
+    const total = getTotalPrice();
+    return balance >= total && quantity > 0 && quantity <= getMaxQuantity();
   };
 
   return (
@@ -303,50 +173,135 @@ export default function MarketplacePage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 sm:mb-12">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-              🛒 NFT Marketplace
+              🛒 Marketplace
             </h1>
             <p className="text-sm sm:text-base text-white/60 max-w-2xl mx-auto">
-              Secure on-chain buying, selling & trading
+              Purchase items with your blastwheelz currency
             </p>
+            {user && (
+              <div className="mt-4 inline-block px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg">
+                <span className="text-white/60 text-sm">Balance: </span>
+                <span className="text-orange-400 font-bold text-lg">
+                  {Number(blastwheelzBalance).toFixed(2)} blastwheelz
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* NFT Cars Grid */}
+          {/* Filters */}
+          <div className="mb-6 flex flex-wrap gap-4 justify-center">
+            <input
+              type="text"
+              placeholder="Search items..."
+              value={filter.search || ''}
+              onChange={(e) => setFilter({ ...filter, search: e.target.value || undefined })}
+              className="px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-orange-500/60"
+            />
+            <select
+              value={filter.type || ''}
+              onChange={(e) => setFilter({ ...filter, type: e.target.value || undefined })}
+              className="px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white focus:outline-none focus:border-orange-500/60"
+            >
+              <option value="">All Types</option>
+              <option value="NFT">NFT</option>
+              <option value="ITEM">Item</option>
+              <option value="UPGRADE">Upgrade</option>
+              <option value="CURRENCY">Currency</option>
+              <option value="OTHER">Other</option>
+            </select>
+            <select
+              value={filter.status || 'ACTIVE'}
+              onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+              className="px-4 py-2 bg-white/5 border border-orange-500/30 rounded-lg text-white focus:outline-none focus:border-orange-500/60"
+            >
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="SOLD_OUT">Sold Out</option>
+            </select>
+          </div>
+
+          {/* Items Grid */}
           <div>
             {loading ? (
               <div className="text-center py-12">
-                <p className="text-white/60">Loading NFTs...</p>
+                <p className="text-white/60">Loading marketplace items...</p>
               </div>
-            ) : cars.length === 0 ? (
+            ) : items.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-white/60">No NFTs available at the moment</p>
+                <p className="text-white/60">No items available at the moment</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                {cars.map((car, index) => (
+                {items.map((item) => (
                   <div
-                    key={car.id || car.tokenId || index}
+                    key={item.id}
                     className="glass border-2 border-orange-500/30 rounded-lg overflow-hidden hover-3d transition-all duration-300 hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20 group"
                   >
                     <div className="relative aspect-square overflow-hidden bg-black">
-                      <img
-                        src={car.image.startsWith('/') ? car.image : `/${car.image}`}
-                        alt={car.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl.startsWith('/') ? item.imageUrl : `/${item.imageUrl}`}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-orange-600/20">
+                          <span className="text-4xl">🎁</span>
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2">
+                        {item.status === 'SOLD_OUT' && (
+                          <span className="px-2 py-1 bg-red-500/80 text-white text-xs font-bold rounded">
+                            SOLD OUT
+                          </span>
+                        )}
+                        {item.status === 'ACTIVE' && item.stock !== null && (
+                          <span className="px-2 py-1 bg-green-500/80 text-white text-xs font-bold rounded">
+                            {item.stock} left
+                          </span>
+                        )}
+                      </div>
                       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
                     </div>
                     <div className="p-4 sm:p-5">
-                      <h3 className="text-lg sm:text-xl font-extrabold text-white mb-2 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-                        {car.name}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-white/70 leading-relaxed line-clamp-3 mb-4">
-                        {car.description}
-                      </p>
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-lg sm:text-xl font-extrabold text-white bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent flex-1">
+                          {item.name}
+                        </h3>
+                        {item.category && (
+                          <span className="px-2 py-1 bg-white/10 text-white/60 text-xs rounded ml-2">
+                            {item.category}
+                          </span>
+                        )}
+                      </div>
+                      {item.description && (
+                        <p className="text-xs sm:text-sm text-white/70 leading-relaxed line-clamp-2 mb-4">
+                          {item.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <span className="text-white/60 text-sm">Price: </span>
+                          <span className="text-orange-400 font-bold text-lg">
+                            {Number(item.price).toFixed(2)} blastwheelz
+                          </span>
+                        </div>
+                        {item.soldCount > 0 && (
+                          <span className="text-white/40 text-xs">
+                            {item.soldCount} sold
+                          </span>
+                        )}
+                      </div>
                       <button
-                        onClick={() => handleBuyClick(car)}
-                        className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md shadow-orange-500/30 text-sm"
+                        onClick={() => handlePurchaseClick(item)}
+                        disabled={item.status !== 'ACTIVE' || !user}
+                        className="w-full px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md shadow-orange-500/30 text-sm"
                       >
-                        {car.suiObjectId ? 'Already Minted' : 'Mint Now'}
+                        {!user
+                          ? 'Login to Purchase'
+                          : item.status !== 'ACTIVE'
+                          ? 'Not Available'
+                          : 'Purchase'}
                       </button>
                     </div>
                   </div>
@@ -357,51 +312,91 @@ export default function MarketplacePage() {
         </div>
       </section>
 
-      {/* Mint Modal */}
-      {showMintModal && selectedCar && (
+      {/* Purchase Modal */}
+      {showPurchaseModal && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="glass border-2 border-orange-500/30 rounded-lg p-6 sm:p-8 max-w-md w-full mx-4">
             <h2 className="text-2xl font-bold text-white mb-4 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-              Mint NFT
+              Purchase {selectedItem.name}
             </h2>
-            <p className="text-white/70 mb-6">
-              Mint <strong className="text-white">{selectedCar.name}</strong> as an NFT. All configuration is pre-set.
-            </p>
-            
-            <div className="mb-4 p-3 bg-white/5 border border-orange-500/20 rounded-lg">
-              <label className="block text-xs font-medium text-white/60 mb-1">
-                Collection ID (Pre-configured)
-              </label>
-              <p className="text-sm text-white/80 font-mono break-all">
-                {COLLECTION_ID}
-              </p>
+            <div className="mb-4">
+              <p className="text-white/70 mb-2">{selectedItem.description || 'No description'}</p>
+              <div className="flex items-center justify-between p-3 bg-white/5 border border-orange-500/20 rounded-lg mb-4">
+                <span className="text-white/60">Price per item:</span>
+                <span className="text-orange-400 font-bold">
+                  {Number(selectedItem.price).toFixed(2)} blastwheelz
+                </span>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-white/80 text-sm font-medium">Quantity:</label>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                    className="px-3 py-1 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    max={getMaxQuantity()}
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 1;
+                      setQuantity(Math.max(1, Math.min(val, getMaxQuantity())));
+                    }}
+                    className="w-20 px-2 py-1 bg-white/5 border border-orange-500/30 rounded text-white text-center focus:outline-none focus:border-orange-500/60"
+                  />
+                  <button
+                    onClick={() => setQuantity(Math.min(getMaxQuantity(), quantity + 1))}
+                    disabled={quantity >= getMaxQuantity()}
+                    className="px-3 py-1 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              {selectedItem.stock !== null && (
+                <p className="text-white/50 text-xs text-right">
+                  {selectedItem.stock} available
+                </p>
+              )}
+              <div className="flex items-center justify-between p-3 bg-white/5 border border-orange-500/20 rounded-lg mt-4">
+                <span className="text-white/60">Total:</span>
+                <span className="text-orange-400 font-bold text-xl">
+                  {getTotalPrice().toFixed(2)} blastwheelz
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 border border-orange-500/20 rounded-lg mt-2">
+                <span className="text-white/60">Your Balance:</span>
+                <span className={`font-bold ${Number(blastwheelzBalance) >= getTotalPrice() ? 'text-green-400' : 'text-red-400'}`}>
+                  {Number(blastwheelzBalance).toFixed(2)} blastwheelz
+                </span>
+              </div>
+              {Number(blastwheelzBalance) < getTotalPrice() && (
+                <p className="text-red-400 text-xs mt-2 text-right">
+                  Insufficient balance
+                </p>
+              )}
             </div>
-
-            <div className="mb-6 p-3 bg-white/5 border border-orange-500/20 rounded-lg">
-              <label className="block text-xs font-medium text-white/60 mb-1">
-                Transfer Policy ID (Pre-configured)
-              </label>
-              <p className="text-sm text-white/80 font-mono break-all">
-                {TRANSFER_POLICY_ID}
-              </p>
-            </div>
-
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  setShowMintModal(false);
+                  setShowPurchaseModal(false);
+                  setSelectedItem(null);
                 }}
-                disabled={minting}
+                disabled={purchasing}
                 className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={handleMint}
-                disabled={minting}
+                onClick={handlePurchase}
+                disabled={purchasing || !canPurchase()}
                 className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all"
               >
-                {minting ? 'Minting...' : 'Mint NFT'}
+                {purchasing ? 'Purchasing...' : 'Purchase'}
               </button>
             </div>
           </div>
@@ -417,4 +412,3 @@ export default function MarketplacePage() {
     </div>
   );
 }
-

@@ -26,7 +26,7 @@ import { prisma } from '@/lib/db';
  *       401:
  *         description: Unauthorized
  *   post:
- *     summary: Admin: set or adjust a user's blastwheelz balance
+ *     summary: "Admin: set or adjust a user's blastwheelz balance"
  *     tags: [Currency]
  *     security:
  *       - bearerAuth: []
