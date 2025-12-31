@@ -129,7 +129,8 @@ export async function POST(
           );
         }
 
-        // Verify mint transaction if provided (user signed mint transaction)
+        // If mintTxHash is provided, verify user's mint transaction
+        // If not provided, admin wallet will mint (handled after purchase)
         if (mintTxHash) {
           nftVerificationResult = await verifyMintTransaction(
             mintTxHash,
@@ -154,6 +155,7 @@ export async function POST(
             );
           }
         }
+        // If no mintTxHash, admin wallet will mint after purchase (see below)
       } else {
         // Using wallet payment - verify transaction
         if (!paymentTxHash) {
@@ -305,8 +307,9 @@ export async function POST(
       timeout: 30000, // Maximum time the transaction can run (30 seconds)
     });
 
-    // For NFT items, save NFT from user's mint transaction or verify wallet payment transaction
+    // For NFT items, save NFT from user's mint transaction, admin wallet mint, or verify wallet payment transaction
     if (item.type === 'NFT') {
+      // Case 1: User minted NFT themselves (useDatabaseBalance = true with mintTxHash)
       if (useDatabaseBalance && nftVerificationResult && nftVerificationResult.nftObjectId) {
         // NFT was already minted by user's wallet transaction, just save it
         try {
@@ -405,7 +408,142 @@ export async function POST(
           });
           throw new Error(`Failed to save NFT: ${saveError.message}`);
         }
-      } else if (nftVerificationResult && nftVerificationResult.nftObjectId) {
+      } 
+      // Case 2: Admin wallet mints NFT (useDatabaseBalance = true without mintTxHash)
+      else if (useDatabaseBalance && !mintTxHash) {
+        try {
+          console.log(`🎨 Admin wallet minting NFT on-chain for purchase ${result.purchase.id}...`);
+          console.log(`💰 Admin wallet will pay for gas and minting costs`);
+          
+          // Get metadata from item or use defaults
+          const metadata = (item.metadata as any) || {};
+          
+          // Mint NFT using admin wallet
+          const mintResult = await mintNFTOnChain({
+            carName: item.name,
+            imageUrl: item.imageUrl || '',
+            projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
+            rim: metadata.rim || 'Standard Alloy Rims',
+            texture: metadata.texture || 'Standard Texture',
+            speed: metadata.speed || 'Standard Speed',
+            brake: metadata.brake || 'Standard Brakes',
+            control: metadata.control || 'Standard Control',
+            ownerAddress: user.walletAddress,
+          });
+
+          if (mintResult.success && mintResult.nftObjectId) {
+            // Get car type and collection ID for this NFT
+            const { getCarTypeFromName } = await import('@/lib/nft-mint');
+            const { getCollectionId } = await import('@/lib/collection-map');
+            const carType = getCarTypeFromName(item.name);
+            const collectionId = getCollectionId(carType);
+            
+            // Store NFT in database
+            const createdNFT = await prisma.nFT.create({
+              data: {
+                tokenId: mintResult.nftObjectId,
+                suiObjectId: mintResult.nftObjectId,
+                collectionId: collectionId,
+                name: item.name,
+                description: item.description,
+                imageUrl: item.imageUrl,
+                projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
+                ownerAddress: user.walletAddress,
+                creator: user.walletAddress,
+                alloyRim: metadata.rim || 'Standard Alloy Rims',
+                frontBonnet: metadata.texture || 'Standard Texture',
+                backBonnet: metadata.speed || 'Standard Speed',
+                metadata: {
+                  purchaseId: result.purchase.id,
+                  kioskId: mintResult.kioskId,
+                  kioskOwnerCapId: mintResult.kioskOwnerCapId,
+                  transactionDigest: mintResult.transactionDigest,
+                  paidByAdmin: true, // Mark that admin wallet paid
+                  carType: carType,
+                  rim: metadata.rim || 'Standard Alloy Rims',
+                  texture: metadata.texture || 'Standard Texture',
+                  speed: metadata.speed || 'Standard Speed',
+                  brake: metadata.brake || 'Standard Brakes',
+                  control: metadata.control || 'Standard Control',
+                },
+              },
+            });
+            
+            // Update transaction record with mint hash
+            const transactions = await prisma.transaction.findMany({
+              where: {
+                userId: user.id,
+                type: 'MARKETPLACE_PURCHASE',
+                createdAt: {
+                  gte: new Date(Date.now() - 60000), // Within last minute
+                },
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 10,
+            });
+
+            const transaction = transactions.find((tx) => {
+              const txMetadata = tx.metadata as any;
+              return txMetadata?.purchaseId === result.purchase.id;
+            });
+
+            if (transaction && mintResult.transactionDigest) {
+              await prisma.transaction.update({
+                where: { id: transaction.id },
+                data: {
+                  suiTxHash: mintResult.transactionDigest,
+                  metadata: {
+                    ...(transaction.metadata as any || {}),
+                    nftId: createdNFT.id,
+                    nftTokenId: createdNFT.tokenId,
+                    nftSuiObjectId: createdNFT.suiObjectId,
+                    nftMintTxDigest: mintResult.transactionDigest,
+                    kioskId: mintResult.kioskId,
+                    kioskOwnerCapId: mintResult.kioskOwnerCapId,
+                    paidByAdmin: true,
+                  },
+                },
+              });
+            }
+            
+            console.log(`✅ NFT minted by admin wallet and stored: ${mintResult.nftObjectId}`);
+            
+            // Update nftVerificationResult for response
+            nftVerificationResult = {
+              isValid: true,
+              nftObjectId: mintResult.nftObjectId,
+              kioskId: mintResult.kioskId,
+              kioskOwnerCapId: mintResult.kioskOwnerCapId,
+            };
+          } else {
+            console.error(`❌ Failed to mint NFT: ${mintResult.error}`);
+            // Refund the balance since minting failed
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                blastwheelzBalance: {
+                  increment: totalPrice,
+                },
+              },
+            });
+            throw new Error(`Failed to mint NFT: ${mintResult.error || 'Unknown error'}`);
+          }
+        } catch (mintError: any) {
+          console.error('❌ Error minting NFT on-chain:', mintError);
+          // Refund the balance since minting failed
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              blastwheelzBalance: {
+                increment: totalPrice,
+              },
+            },
+          });
+          throw new Error(`Failed to mint NFT: ${mintError.message || 'Unknown error'}`);
+        }
+      } 
+      // Case 3: User paid from wallet (useDatabaseBalance = false with paymentTxHash)
+      else if (nftVerificationResult && nftVerificationResult.nftObjectId) {
         // Save NFT from wallet transaction
       try {
         console.log(`💾 Saving NFT to database from transaction ${paymentTxHash}...`);
@@ -494,7 +632,8 @@ export async function POST(
         nftObjectId: nftVerificationResult.nftObjectId,
         kioskId: nftVerificationResult.kioskId,
         kioskOwnerCapId: nftVerificationResult.kioskOwnerCapId,
-        transactionDigest: mintTxHash || paymentTxHash,
+        transactionDigest: mintTxHash || paymentTxHash || nftVerificationResult.transactionDigest,
+        paidByAdmin: useDatabaseBalance && !mintTxHash, // True if admin wallet minted
       } : undefined,
     });
   } catch (error: any) {

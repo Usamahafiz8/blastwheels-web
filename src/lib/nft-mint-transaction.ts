@@ -54,10 +54,15 @@ export async function buildMintOnlyTransaction(
   console.log('🔧 Transfer Policy is shared:', isPolicyShared);
 
   if (!isCollectionShared) {
-    throw new Error(
-      `Collection ${collectionId} is not shared. Collections must be shared objects for users to mint NFTs. ` +
-      `Please share the collection on-chain using the admin account.`
-    );
+    const errorMessage = 
+      `Collection is not shared. ` +
+      `To enable user wallet minting, collections must be shared objects on the Sui blockchain. ` +
+      `Please run: npm run share-collections (or npx tsx scripts/share-collections.ts) ` +
+      `with your ADMIN_PRIVATE_KEY or ADMIN_MNEMONIC set in your .env file. ` +
+      `Collection ID: ${collectionId} (Car Type: ${carType})`;
+    
+    console.error('❌ Collection sharing error:', errorMessage);
+    throw new Error(errorMessage);
   }
 
   // Create transaction

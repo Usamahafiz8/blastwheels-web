@@ -719,6 +719,27 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  async shareCollections() {
+    return this.request<{
+      message: string;
+      summary: {
+        total: number;
+        successful: number;
+        failed: number;
+        alreadyShared: number;
+      };
+      results: Array<{
+        carType: string;
+        success: boolean;
+        txHash?: string;
+        error?: string;
+        alreadyShared?: boolean;
+      }>;
+    }>('/admin/share-collections', {
+      method: 'POST',
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
