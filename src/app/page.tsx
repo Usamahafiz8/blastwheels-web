@@ -232,7 +232,7 @@ export default function Home() {
           {/* CTA Buttons - Compact */}
           <div className="animate-fade-in flex flex-col sm:flex-row gap-3 justify-center items-center" style={{ animationDelay: '0.4s' }}>
             <Link
-              href="/dashboard"
+              href="/race"
               className="group relative px-6 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-orange-500/50 text-sm sm:text-base"
             >
               <span className="relative z-10">🚀 Start Racing</span>
@@ -573,15 +573,29 @@ export default function Home() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 sm:mb-6 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
             🤝 Partnerships
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto px-2">
-            {[1, 2, 3, 4].map((i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 max-w-6xl mx-auto px-2">
+            {[
+              'WhatsApp Image 2025-12-31 at 21.34.43 (1).jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.43.jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.42 (2).jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.42 (1).jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.42.jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.41 (3).jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.41 (2).jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.41 (1).jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.41.jpeg',
+              'WhatsApp Image 2025-12-31 at 21.34.40.jpeg',
+              
+            ].map((imageName, i) => (
               <div
                 key={i}
-                className="glass border border-orange-500/20 rounded-lg p-3 sm:p-4 h-20 sm:h-24 flex items-center justify-center hover:border-orange-500/50 transition-all duration-300 hover-3d glow-orange-hover group"
+                className="glass border border-orange-500/20 rounded-lg p-2 sm:p-3 overflow-hidden hover:border-orange-500/50 transition-all duration-300 hover-3d glow-orange-hover group min-h-[120px] sm:min-h-[150px] flex items-center justify-center"
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500/20 to-orange-600/20 rounded-full flex items-center justify-center group-hover:from-orange-500/40 group-hover:to-orange-600/40 transition-all duration-300">
-                  <p className="text-white/40 group-hover:text-orange-500 text-[10px] sm:text-xs font-bold transition-colors">Partner {i}</p>
-                </div>
+                <img
+                  src={`/${imageName}`}
+                  alt={`Partner ${i + 1}`}
+                  className="w-full h-full object-contain rounded-lg group-hover:scale-110 transition-transform duration-300 max-h-[200px] sm:max-h-[250px]"
+                />
               </div>
             ))}
           </div>
@@ -589,7 +603,7 @@ export default function Home() {
       </section>
 
       {/* Join The Race Section - Compact & Mobile Responsive */}
-      <section 
+      {/* <section 
         id="join" 
         ref={setRef('join')}
         className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-opacity duration-300 ${
@@ -601,9 +615,7 @@ export default function Home() {
             Join The Race! 🏁
           </h2>
           
-          {/* Steps Grid - Horizontal Layout */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            {/* Step 1 */}
             <div className="glass border-2 border-orange-500/30 rounded-lg sm:rounded-xl p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
               <div className="flex flex-col items-center text-center">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform mb-2 sm:mb-3">
@@ -618,7 +630,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Step 2 */}
             <div className="glass border-2 border-orange-500/30 rounded-lg sm:rounded-xl p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
               <div className="flex flex-col items-center text-center">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform mb-2 sm:mb-3">
@@ -634,7 +645,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Step 3 */}
             <div className="glass border-2 border-orange-500/30 rounded-lg sm:rounded-xl p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
               <div className="flex flex-col items-center text-center">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform mb-2 sm:mb-3">
@@ -656,10 +666,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Roadmap Section - Compact & Mobile Responsive */}
-      <section 
+      {/* <section 
         id="roadmap" 
         ref={setRef('roadmap')}
         className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-opacity duration-300 ${
@@ -672,7 +682,6 @@ export default function Home() {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            {/* Stage 1 */}
             <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60">
               <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform flex-shrink-0">
@@ -689,7 +698,6 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Stage 2 */}
             <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60">
               <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform flex-shrink-0">
@@ -706,7 +714,6 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Stage 3 */}
             <div className="glass border-2 border-orange-500/30 rounded-lg p-4 sm:p-5 hover-3d transition-all duration-300 group hover:border-orange-500/60">
               <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-orange-500/50 group-hover:scale-110 transition-transform flex-shrink-0">
@@ -724,7 +731,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
     </>
   );
