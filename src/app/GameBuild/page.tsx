@@ -53,7 +53,31 @@ export default function GameBuildPage() {
 
     isLoadingRef.current = true;
 
-    const container = containerRef.current;
+    // Test if Unity files are accessible before loading
+    const testFileAccess = async () => {
+      try {
+        const response = await fetch('/GameBuild/Build/Build.loader.js', { method: 'HEAD' });
+        if (!response.ok) {
+          console.error('Unity loader file not accessible:', response.status);
+          alert('Unity game files not accessible. Please try refreshing the page.');
+          isLoadingRef.current = false;
+          return false;
+        }
+        console.log('Unity files are accessible');
+        return true;
+      } catch (error) {
+        console.error('Error testing file access:', error);
+        alert('Network error loading game files. Please check your connection.');
+        isLoadingRef.current = false;
+        return false;
+      }
+    };
+
+    testFileAccess().then(canProceed => {
+      if (!canProceed) return;
+
+      // Continue with Unity loading...
+      const container = containerRef.current;
     const canvas = canvasRef.current;
     const loadingBar = loadingBarRef.current;
     const progressBarFull = progressBarRef.current;
@@ -109,7 +133,11 @@ export default function GameBuildPage() {
       }
     }
 
-    const buildUrl = '/GameBuild/Build';
+    // Use absolute URLs for production to ensure proper loading
+    const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+    const baseUrl = isProduction ? window.location.origin : '';
+    const buildUrl = baseUrl + '/GameBuild/Build';
+
     const loaderUrl = buildUrl + '/Build.loader.js';
     const config = {
       dataUrl: buildUrl + '/Build.data',
@@ -128,7 +156,7 @@ export default function GameBuildPage() {
       meta.name = 'viewport';
       meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
       document.getElementsByTagName('head')[0].appendChild(meta);
-      container.className = 'unity-mobile';
+      if (container) container.className = 'unity-mobile';
       if (canvas) canvas.className = 'unity-mobile';
     } else {
       if (canvas) {
@@ -145,19 +173,27 @@ export default function GameBuildPage() {
     scriptRef.current = script;
 
     script.onload = () => {
+      console.log('Unity loader script loaded successfully');
+      console.log('createUnityInstance available:', !!window.createUnityInstance);
+      console.log('Build URL:', buildUrl);
+
       if (window.createUnityInstance) {
+        console.log('Starting Unity instance creation with config:', config);
+
         window.createUnityInstance(canvas, config, (progress: number) => {
+          console.log('Unity loading progress:', progress);
           if (progressBarFull) {
             progressBarFull.style.width = 100 * progress + '%';
           }
         }).then((unityInstance: any) => {
+          console.log('Unity instance created successfully');
           unityInstanceRef.current = unityInstance;
           if (loadingBar) loadingBar.style.display = 'none';
 
           // Send token after Unity loads
           sendTokenToUnity(unityInstance);
 
-          if (fullscreenButton) {
+          if (fullscreenButton && container) {
             fullscreenButton.onclick = () => {
               if (container.requestFullscreen) {
                 container.requestFullscreen();
@@ -172,9 +208,14 @@ export default function GameBuildPage() {
           }
         }).catch((message: string) => {
           console.error('Unity initialization error:', message);
+          alert('Failed to load Unity game: ' + message);
           if (loadingBar) loadingBar.style.display = 'none';
           isLoadingRef.current = false;
         });
+      } else {
+        console.error('createUnityInstance not available after script load');
+        alert('Unity loader failed to initialize');
+        isLoadingRef.current = false;
       }
     };
 
@@ -184,6 +225,7 @@ export default function GameBuildPage() {
     };
 
     document.body.appendChild(script);
+    }); // Close testFileAccess callback
 
     return () => {
       // Cleanup Unity instance
