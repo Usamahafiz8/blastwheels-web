@@ -27,12 +27,17 @@ const { networkConfig } = createNetworkConfig({
 // Get default network from environment variable (client-side needs NEXT_PUBLIC_ prefix)
 // NEXT_PUBLIC_ variables are embedded at build time and available everywhere
 const getDefaultNetwork = (): 'mainnet' | 'testnet' | 'devnet' | 'localnet' => {
-  const envNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK || process.env.SUI_NETWORK;
+  // Check for NEXT_PUBLIC_SUI_NETWORK first (client-side env var)
+  const envNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK;
+  
   if (envNetwork && ['mainnet', 'testnet', 'devnet', 'localnet'].includes(envNetwork)) {
+    console.log(`🌐 Using network from NEXT_PUBLIC_SUI_NETWORK: ${envNetwork}`);
     return envNetwork as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
   }
-  // Default to testnet if not specified
-  return 'testnet';
+  
+  // Default to mainnet if not specified (matching backend configuration)
+  console.log('🌐 Using default network: mainnet (set NEXT_PUBLIC_SUI_NETWORK=mainnet in .env.local to be explicit)');
+  return 'mainnet';
 };
 
 export default function AppWalletProvider({
@@ -57,6 +62,15 @@ export default function AppWalletProvider({
   }, [isRegistered]);
 
   const defaultNetwork = getDefaultNetwork();
+
+  // Log network configuration for debugging
+  useEffect(() => {
+    console.log('🔧 Wallet Provider Network Configuration:', {
+      defaultNetwork,
+      envNetwork: process.env.NEXT_PUBLIC_SUI_NETWORK,
+      networkConfig: Object.keys(networkConfig),
+    });
+  }, [defaultNetwork]);
 
   return (
     <QueryClientProvider client={queryClient}>

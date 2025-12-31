@@ -13,7 +13,8 @@ class ApiClient {
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
     if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('auth_token');
+      // Check both 'auth_token' and 'token' for backward compatibility
+      this.token = localStorage.getItem('auth_token') || localStorage.getItem('token');
     }
   }
 
@@ -21,9 +22,17 @@ class ApiClient {
     this.token = token;
     if (typeof window !== 'undefined') {
       if (token) {
+        // Save token in both locations:
+        // - 'auth_token' for the web app
+        // - 'token' for WebGL game compatibility
         localStorage.setItem('auth_token', token);
+        localStorage.setItem('token', token);
+        console.log('✅ Token saved to localStorage (auth_token and token)');
       } else {
+        // Remove both tokens on logout
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('token');
+        console.log('🗑️ Token removed from localStorage');
       }
     }
   }

@@ -101,6 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     apiClient.setToken(null);
     setUser(null);
+    // Also clear WebGL token explicitly
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+    }
   };
 
   const refreshUser = async () => {
