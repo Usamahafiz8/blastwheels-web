@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
         treasuryAddress,
         amount: purchaseAmount.toString(),
         amountInSmallestUnit: amountInSmallestUnit.toString(),
-        coinType: SUI_CONFIG.coinType,
+        coinType: SUI_CONFIG.coinType, // Use WHEELS tokens for purchase
         instructions: 'Build a transaction to transfer tokens to treasury, sign it, execute it, then call this endpoint again with the txHash',
       });
     }

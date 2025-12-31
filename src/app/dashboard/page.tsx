@@ -161,13 +161,13 @@ export default function DashboardPage() {
         if (txDetails.data?.treasuryAddress) {
           // Build transaction
           const tx = new SuiTransaction();
-          const amountInSmallestUnit = BigInt(Math.floor(parseFloat(purchaseAmount) * 1_000_000_000));
+          const amountInSmallestUnit = BigInt(txDetails.data.amountInSmallestUnit);
 
-          // Get user's WHEELS coins (game token)
+          // Get user's WHEELS coins (purchase token)
           const { suiClient: client } = await import('@/lib/sui');
           const coins = await client.getCoins({
             owner: account.address,
-            coinType: SUI_CONFIG.coinType, // WHEELS token
+            coinType: txDetails.data.coinType, // WHEELS token
           });
 
           if (coins.data.length === 0) {
@@ -183,28 +183,40 @@ export default function DashboardPage() {
           }
 
           if (totalBalance < amountInSmallestUnit) {
-            alert('Insufficient balance');
+            alert('Insufficient WHEELS token balance');
             setPurchasing(false);
             return;
           }
 
           // Build transfer transaction
-          const coinObjects = coins.data.map(coin => tx.object(coin.coinObjectId));
-          
-          if (coinObjects.length > 1) {
-            const mergedCoin = tx.mergeCoins(coinObjects[0], coinObjects.slice(1));
-            const paymentCoin = tx.splitCoins(mergedCoin, [amountInSmallestUnit]);
-            tx.transferObjects([paymentCoin], txDetails.data.treasuryAddress);
-          } else {
-            const paymentCoin = tx.splitCoins(coinObjects[0], [amountInSmallestUnit]);
-            tx.transferObjects([paymentCoin], txDetails.data.treasuryAddress);
+          // Find the first coin with sufficient balance
+          const sufficientCoin = coins.data.find(coin => BigInt(coin.balance || '0') >= amountInSmallestUnit);
+
+          if (!sufficientCoin) {
+            alert('No single coin has sufficient balance. Please consolidate your coins first.');
+            setPurchasing(false);
+            return;
           }
 
+          // Split the payment amount from the selected coin
+          const coinObject = tx.object(sufficientCoin.coinObjectId);
+          const paymentCoin = tx.splitCoins(coinObject, [amountInSmallestUnit]);
+
+          // Transfer the payment coin to treasury
+          tx.transferObjects([paymentCoin], txDetails.data.treasuryAddress);
+
+          // Set gas budget (0.01 SUI)
+          tx.setGasBudget(10000000);
+
+          console.log('Transaction built:', tx);
+          console.log('Treasury address:', txDetails.data.treasuryAddress);
+          console.log('Coin type (WHEELS):', txDetails.data.coinType);
+          console.log('Amount:', amountInSmallestUnit.toString());
+
           // Sign and execute transaction
-          signAndExecute(
-            {
-              transaction: tx,
-            },
+          signAndExecute({
+            transaction: tx,
+          },
             {
               onSuccess: async (result) => {
                 const txHash = result.digest;
@@ -1057,14 +1069,14 @@ export default function DashboardPage() {
 
               <p className="text-white/60 text-sm mb-6">
                 {useAutoPurchase
-                  ? 'Transfer blastweel tokens to treasury wallet automatically. You will be prompted to sign the transaction.'
+                  ? 'Transfer WHEELS tokens to treasury wallet automatically. You will be prompted to sign the transaction.'
                   : 'Enter the amount and transaction hash from your Sui wallet.'}
               </p>
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-white/80 text-sm mb-2">
-                    Amount (Blastweel Tokens)
+                    Amount (WHEELS Tokens)
                   </label>
                   <input
                     type="number"

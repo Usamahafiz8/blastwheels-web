@@ -1,6 +1,6 @@
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 
-const network = (process.env.SUI_NETWORK || 'mainnet') as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+const network = (process.env.SUI_NETWORK || 'mainnet') as 'mainnet' | 'devnet' | 'localnet';
 const rpcUrl = process.env.SUI_RPC_URL || getFullnodeUrl(network);
 
 export const suiClient = new SuiClient({ url: rpcUrl });

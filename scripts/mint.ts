@@ -210,7 +210,7 @@ async function mintNFT(
             }
             
             console.log('🔗 View on Sui Explorer:');
-            console.log(`   https://suiexplorer.com/txblock/${result.digest}?network=${suiNetwork.includes('mainnet') ? 'mainnet' : 'testnet'}\n`);
+            console.log(`   https://suiexplorer.com/txblock/${result.digest}?network=mainnet\n`);
         } else {
             console.log('⚠️  Warning: Could not find kiosk owner cap in transaction result');
             console.log('   Full result:', JSON.stringify(result, null, 2));

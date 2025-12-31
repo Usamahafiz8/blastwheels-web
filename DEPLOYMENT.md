@@ -9,7 +9,7 @@ This project includes GitHub Actions for automated deployment when code is pushe
 1. **GitHub Secrets** - Add these secrets to your GitHub repository:
    - `DATABASE_URL` - Your PostgreSQL connection string
    - `JWT_SECRET` - Your JWT secret key
-   - `SUI_NETWORK` - Sui network (mainnet/testnet)
+   - `SUI_NETWORK` - Sui network (mainnet)
    - `SUI_RPC_URL` - Sui RPC endpoint
    - `SUI_PACKAGE_ID` - Sui package ID
    - `SSH_HOST` - Your server IP address

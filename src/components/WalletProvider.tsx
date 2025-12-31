@@ -20,19 +20,18 @@ const queryClient = new QueryClient({
 const { networkConfig } = createNetworkConfig({
   localnet: { url: getFullnodeUrl('localnet') },
   devnet: { url: getFullnodeUrl('devnet') },
-  testnet: { url: getFullnodeUrl('testnet') },
   mainnet: { url: getFullnodeUrl('mainnet') },
 });
 
 // Get default network from environment variable (client-side needs NEXT_PUBLIC_ prefix)
 // NEXT_PUBLIC_ variables are embedded at build time and available everywhere
-const getDefaultNetwork = (): 'mainnet' | 'testnet' | 'devnet' | 'localnet' => {
+const getDefaultNetwork = (): 'mainnet' | 'devnet' | 'localnet' => {
   // Check for NEXT_PUBLIC_SUI_NETWORK first (client-side env var)
   const envNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK;
   
-  if (envNetwork && ['mainnet', 'testnet', 'devnet', 'localnet'].includes(envNetwork)) {
+  if (envNetwork && ['mainnet', 'devnet', 'localnet'].includes(envNetwork)) {
     console.log(`🌐 Using network from NEXT_PUBLIC_SUI_NETWORK: ${envNetwork}`);
-    return envNetwork as 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+    return envNetwork as 'mainnet' | 'devnet' | 'localnet';
   }
   
   // Default to mainnet if not specified (matching backend configuration)
