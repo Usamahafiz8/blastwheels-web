@@ -99,10 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    apiClient.setToken(null);
+    apiClient.setToken(null); // This already handles both 'auth_token' and 'token'
     setUser(null);
-    // Also clear WebGL token explicitly
+    // Ensure both tokens are cleared (redundant but safe)
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
       localStorage.removeItem('token');
     }
   };

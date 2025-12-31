@@ -14,7 +14,22 @@ class ApiClient {
     this.baseUrl = baseUrl;
     if (typeof window !== 'undefined') {
       // Check both 'auth_token' and 'token' for backward compatibility
-      this.token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      // Sync them if one exists but the other doesn't
+      const authToken = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
+      
+      if (authToken && !token) {
+        // If auth_token exists but token doesn't, sync token
+        localStorage.setItem('token', authToken);
+        this.token = authToken;
+      } else if (token && !authToken) {
+        // If token exists but auth_token doesn't, sync auth_token
+        localStorage.setItem('auth_token', token);
+        this.token = token;
+      } else {
+        // Use whichever exists, or null if neither exists
+        this.token = authToken || token;
+      }
     }
   }
 
@@ -25,6 +40,7 @@ class ApiClient {
         // Save token in both locations:
         // - 'auth_token' for the web app
         // - 'token' for WebGL game compatibility
+        // Always sync both to ensure they stay in sync
         localStorage.setItem('auth_token', token);
         localStorage.setItem('token', token);
         console.log('✅ Token saved to localStorage (auth_token and token)');

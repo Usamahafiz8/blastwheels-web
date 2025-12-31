@@ -91,17 +91,29 @@ export default function RacePage() {
       updateBannerVisibility();
     }
 
-    // Token send function
+    // Token send function - check both auth_token and token, sync if needed
     function sendTokenToUnity(unityInstance: any) {
       try {
-        const token = localStorage.getItem('token') || '';
-        console.log('WebGL Token:', token);
+        // Check both token locations and sync if needed
+        const authToken = localStorage.getItem('auth_token');
+        const token = localStorage.getItem('token');
+        
+        // Sync tokens if one exists but the other doesn't
+        if (authToken && !token) {
+          localStorage.setItem('token', authToken);
+        } else if (token && !authToken) {
+          localStorage.setItem('auth_token', token);
+        }
+        
+        // Use whichever token exists
+        const finalToken = authToken || token || '';
+        console.log('WebGL Token:', finalToken);
 
-        if (unityInstance) {
+        if (unityInstance && finalToken) {
           unityInstance.SendMessage(
             'PlayerLogin',
             'ReceiveToken',
-            token
+            finalToken
           );
         }
       } catch (e) {
