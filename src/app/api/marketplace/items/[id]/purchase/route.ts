@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db';
 import { verifyPurchaseTransaction } from '@/lib/treasury';
 import { mintNFTOnChain, mintMultipleNFTs } from '@/lib/nft-mint-service';
 import { suiClient, SUI_CONFIG } from '@/lib/sui';
+import { verifyPurchaseAndMintTransaction } from '@/lib/nft-purchase-transaction';
+import { verifyMintTransaction } from '@/lib/nft-mint-transaction';
 
 /**
  * @swagger
@@ -41,7 +43,12 @@ export async function POST(
     const user = await requireAuth(req);
     const { id } = await context.params;
     const body = await req.json();
-    const { quantity = 1, paymentTxHash } = body as { quantity?: number; paymentTxHash?: string };
+    const { quantity = 1, paymentTxHash, mintTxHash, useDatabaseBalance = false } = body as { 
+      quantity?: number; 
+      paymentTxHash?: string;
+      mintTxHash?: string;
+      useDatabaseBalance?: boolean;
+    };
 
     if (!quantity || quantity < 1) {
       return NextResponse.json(
@@ -87,82 +94,138 @@ export async function POST(
     const totalPrice = Number(item.price) * quantity;
     const totalPriceInSmallestUnit = BigInt(Math.floor(totalPrice * 1_000_000_000));
 
-    // For NFT items, require payment transaction hash and verify payment from crypto wallet
+    // For NFT items, handle minting
+    let nftVerificationResult: any = null;
     if (item.type === 'NFT') {
-      if (!paymentTxHash) {
+      // For now, NFT purchases are limited to quantity 1 per transaction
+      // Multiple NFTs require multiple transactions
+      if (quantity > 1) {
         return NextResponse.json(
-          { error: 'Payment transaction hash is required for NFT purchases' },
+          { error: 'NFT purchases are limited to quantity 1 per transaction. Please purchase multiple NFTs separately.' },
           { status: 400 }
         );
       }
 
-      // Check if transaction hash already exists
-      const existingTx = await prisma.transaction.findUnique({
-        where: { suiTxHash: paymentTxHash },
-      });
+      // Check if using database balance or wallet payment
+      if (useDatabaseBalance) {
+        // Check database balance
+        const userBalance = Number(userWithBalance?.blastwheelzBalance || 0);
+        if (userBalance < totalPrice) {
+          return NextResponse.json(
+            {
+              error: 'Insufficient balance',
+              required: totalPrice,
+              available: userBalance,
+            },
+            { status: 400 }
+          );
+        }
 
-      if (existingTx) {
-        return NextResponse.json(
-          { error: 'Transaction hash already processed' },
-          { status: 400 }
+        // Verify user has wallet address for NFT transfer
+        if (!user.walletAddress) {
+          return NextResponse.json(
+            { error: 'Wallet address is required to receive NFTs. Please set your wallet address in your profile.' },
+            { status: 400 }
+          );
+        }
+
+        // Verify mint transaction if provided (user signed mint transaction)
+        if (mintTxHash) {
+          nftVerificationResult = await verifyMintTransaction(
+            mintTxHash,
+            user.walletAddress,
+            item.name
+          );
+
+          if (!nftVerificationResult.isValid) {
+            return NextResponse.json(
+              { 
+                error: nftVerificationResult.error || 'Mint transaction verification failed',
+              },
+              { status: 400 }
+            );
+          }
+
+          // Verify we got the NFT details
+          if (!nftVerificationResult.nftObjectId || !nftVerificationResult.kioskOwnerCapId) {
+            return NextResponse.json(
+              { error: 'NFT minting verification failed. NFT details not found in transaction.' },
+              { status: 400 }
+            );
+          }
+        }
+      } else {
+        // Using wallet payment - verify transaction
+        if (!paymentTxHash) {
+          return NextResponse.json(
+            { error: 'Transaction hash is required for wallet-based NFT purchases' },
+            { status: 400 }
+          );
+        }
+
+        // Check if transaction hash already exists
+        const existingTx = await prisma.transaction.findUnique({
+          where: { suiTxHash: paymentTxHash },
+        });
+
+        if (existingTx) {
+          return NextResponse.json(
+            { error: 'Transaction hash already processed' },
+            { status: 400 }
+          );
+        }
+
+        // Verify combined purchase and mint transaction
+        const metadata = (item.metadata as any) || {};
+        nftVerificationResult = await verifyPurchaseAndMintTransaction(
+          paymentTxHash,
+          totalPriceInSmallestUnit,
+          user.walletAddress,
+          item.name
         );
+
+        if (!nftVerificationResult.isValid) {
+          return NextResponse.json(
+            { 
+              error: nftVerificationResult.error || 'Transaction verification failed',
+              details: {
+                paymentVerified: nftVerificationResult.paymentVerified,
+                mintVerified: nftVerificationResult.mintVerified,
+              }
+            },
+            { status: 400 }
+          );
+        }
+
+        // Verify we got the NFT details
+        if (!nftVerificationResult.nftObjectId || !nftVerificationResult.kioskOwnerCapId) {
+          return NextResponse.json(
+            { error: 'NFT minting verification failed. NFT details not found in transaction.' },
+            { status: 400 }
+          );
+        }
       }
-
-      // Verify payment transaction
-      const isValid = await verifyPurchaseTransaction(
-        paymentTxHash,
-        totalPriceInSmallestUnit,
-        user.walletAddress
-      );
-
-      if (!isValid) {
-        return NextResponse.json(
-          { error: 'Payment transaction verification failed. Please ensure you sent the correct amount to the treasury.' },
-          { status: 400 }
-        );
-      }
-
-      // Check user's wallet balance for blastwheels tokens
-      const coins = await suiClient.getCoins({
-        owner: user.walletAddress,
-        coinType: SUI_CONFIG.blastweelTokenType,
-      });
-
-      let walletBalance = BigInt(0);
-      for (const coin of coins.data) {
-        walletBalance += BigInt(coin.balance || '0');
-      }
-
-      if (walletBalance < totalPriceInSmallestUnit) {
+    } else {
+      // For non-NFT items, check database balance
+      const userBalance = Number(userWithBalance?.blastwheelzBalance || 0);
+      if (userBalance < totalPrice) {
         return NextResponse.json(
           {
-            error: 'Insufficient wallet balance',
-            required: totalPrice.toString(),
-            available: (Number(walletBalance) / 1_000_000_000).toString(),
+            error: 'Insufficient balance',
+            required: totalPrice,
+            available: userBalance,
           },
           { status: 400 }
         );
       }
-    } else {
-      // For non-NFT items, check database balance
-    const userBalance = Number(userWithBalance?.blastwheelzBalance || 0);
-    if (userBalance < totalPrice) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient balance',
-          required: totalPrice,
-          available: userBalance,
-        },
-        { status: 400 }
-      );
-      }
     }
 
-    // Process purchase in transaction
+    // Process purchase in transaction with increased timeout (30 seconds)
+    // The transaction includes multiple database operations that may take time
     const result = await prisma.$transaction(async (tx) => {
-      // For non-NFT items, deduct from database balance
+      // Deduct from database balance for non-NFT items or NFT items using database balance
       let updatedUser;
-      if (item.type !== 'NFT') {
+      if (item.type !== 'NFT' || useDatabaseBalance) {
         updatedUser = await tx.user.update({
           where: { id: user.id },
           data: {
@@ -175,7 +238,7 @@ export async function POST(
           },
         });
       } else {
-        // For NFT items, balance is already deducted from crypto wallet
+        // For NFT items with wallet payment, balance is already deducted from crypto wallet
         updatedUser = await tx.user.findUnique({
           where: { id: user.id },
           select: {
@@ -222,127 +285,198 @@ export async function POST(
           userId: user.id,
           type: 'MARKETPLACE_PURCHASE',
           amount: totalPrice.toString(),
-          suiTxHash: paymentTxHash || null,
+          suiTxHash: mintTxHash || paymentTxHash || null,
           status: 'COMPLETED',
           metadata: {
             itemId: id,
             itemName: item.name,
             purchaseId: purchase.id,
             quantity,
-            paymentMethod: item.type === 'NFT' ? 'crypto_wallet' : 'database_balance',
+            paymentMethod: item.type === 'NFT' 
+              ? (useDatabaseBalance ? 'database_balance' : 'crypto_wallet')
+              : 'database_balance',
           },
         },
       });
 
       return { updatedUser, updatedItem, purchase };
+    }, {
+      maxWait: 30000, // Maximum time to wait for a transaction slot (30 seconds)
+      timeout: 30000, // Maximum time the transaction can run (30 seconds)
     });
 
-    // After successful purchase, mint NFT on-chain if item type is NFT
-    let mintResults: any[] = [];
-    if (item.type === 'NFT' && user.walletAddress) {
+    // For NFT items, save NFT from user's mint transaction or verify wallet payment transaction
+    if (item.type === 'NFT') {
+      if (useDatabaseBalance && nftVerificationResult && nftVerificationResult.nftObjectId) {
+        // NFT was already minted by user's wallet transaction, just save it
+        try {
+          console.log(`💾 Saving NFT to database from user's mint transaction ${mintTxHash}...`);
+          // Get car type and collection ID for this NFT
+          const { getCarTypeFromName } = await import('@/lib/nft-mint');
+          const { getCollectionId } = await import('@/lib/collection-map');
+          const carType = getCarTypeFromName(item.name);
+          const collectionId = getCollectionId(carType);
+          
+          const metadata = (item.metadata as any) || {};
+          
+          // Store NFT in database
+          const createdNFT = await prisma.nFT.create({
+            data: {
+              tokenId: nftVerificationResult.nftObjectId,
+              suiObjectId: nftVerificationResult.nftObjectId,
+              collectionId: collectionId,
+              name: item.name,
+              description: item.description,
+              imageUrl: item.imageUrl,
+              projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
+              ownerAddress: user.walletAddress,
+              creator: user.walletAddress,
+              alloyRim: metadata.rim || 'Standard Alloy Rims',
+              frontBonnet: metadata.texture || 'Standard Texture',
+              backBonnet: metadata.speed || 'Standard Speed',
+              metadata: {
+                purchaseId: result.purchase.id,
+                kioskId: nftVerificationResult.kioskId,
+                kioskOwnerCapId: nftVerificationResult.kioskOwnerCapId,
+                transactionDigest: mintTxHash,
+                carType: carType,
+                rim: metadata.rim || 'Standard Alloy Rims',
+                texture: metadata.texture || 'Standard Texture',
+                speed: metadata.speed || 'Standard Speed',
+                brake: metadata.brake || 'Standard Brakes',
+                control: metadata.control || 'Standard Control',
+              },
+            },
+          });
+          
+          // Update transaction record - find by purchaseId in metadata
+          // Prisma JSON filtering is limited, so we fetch and filter in code
+          const transactions = await prisma.transaction.findMany({
+            where: {
+              userId: user.id,
+              type: 'MARKETPLACE_PURCHASE',
+              createdAt: {
+                gte: new Date(Date.now() - 60000), // Within last minute
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+          });
+
+          const transaction = transactions.find((tx) => {
+            const txMetadata = tx.metadata as any;
+            return txMetadata?.purchaseId === result.purchase.id;
+          });
+
+          if (transaction) {
+            await prisma.transaction.update({
+              where: { id: transaction.id },
+              data: {
+                suiTxHash: mintTxHash,
+                metadata: {
+                  ...(transaction.metadata as any || {}),
+                  itemId: id,
+                  itemName: item.name,
+                  purchaseId: result.purchase.id,
+                  quantity: quantity,
+                  paymentMethod: 'database_balance',
+                  nftId: createdNFT.id,
+                  nftTokenId: createdNFT.tokenId,
+                  nftSuiObjectId: createdNFT.suiObjectId,
+                  nftMintTxDigest: mintTxHash,
+                  kioskId: nftVerificationResult.kioskId,
+                  kioskOwnerCapId: nftVerificationResult.kioskOwnerCapId,
+                },
+              },
+            });
+          }
+          
+          console.log(`✅ NFT saved to database: ${nftVerificationResult.nftObjectId}`);
+        } catch (saveError: any) {
+          console.error('❌ Error saving NFT to database:', saveError);
+          // Refund the balance since saving failed
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              blastwheelzBalance: {
+                increment: totalPrice,
+              },
+            },
+          });
+          throw new Error(`Failed to save NFT: ${saveError.message}`);
+        }
+      } else if (nftVerificationResult && nftVerificationResult.nftObjectId) {
+        // Save NFT from wallet transaction
       try {
-        console.log(`🎨 Minting ${quantity} NFT(s) on-chain for purchase ${result.purchase.id}...`);
+        console.log(`💾 Saving NFT to database from transaction ${paymentTxHash}...`);
         
         // Get metadata from item or use defaults
         const metadata = (item.metadata as any) || {};
         
-        if (quantity === 1) {
-          // Single NFT mint
-          const mintResult = await mintNFTOnChain({
-            carName: item.name,
-            imageUrl: item.imageUrl || '',
-            projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
-            rim: metadata.rim || 'Standard Alloy Rims',
-            texture: metadata.texture || 'Standard Texture',
-            speed: metadata.speed || 'Standard Speed',
-            brake: metadata.brake || 'Standard Brakes',
-            control: metadata.control || 'Standard Control',
-            ownerAddress: user.walletAddress,
-          });
-
-          if (mintResult.success && mintResult.nftObjectId) {
-            // Store NFT in database
-            await prisma.nFT.create({
-              data: {
-                tokenId: mintResult.nftObjectId,
-                suiObjectId: mintResult.nftObjectId,
-                name: item.name,
-                description: item.description,
-                imageUrl: item.imageUrl,
-                ownerAddress: user.walletAddress,
-                creator: user.walletAddress,
-                metadata: {
-                  purchaseId: result.purchase.id,
-                  kioskId: mintResult.kioskId,
-                  kioskOwnerCapId: mintResult.kioskOwnerCapId,
-                  transactionDigest: mintResult.transactionDigest,
-                  rim: metadata.rim || 'Standard Alloy Rims',
-                  texture: metadata.texture || 'Standard Texture',
-                  speed: metadata.speed || 'Standard Speed',
-                  brake: metadata.brake || 'Standard Brakes',
-                  control: metadata.control || 'Standard Control',
-                },
-              },
-            });
-            console.log(`✅ NFT minted and stored: ${mintResult.nftObjectId}`);
-          } else {
-            console.error(`❌ Failed to mint NFT: ${mintResult.error}`);
-          }
-          mintResults = [mintResult];
-        } else {
-          // Multiple NFTs
-          const mintParams = Array.from({ length: quantity }, () => ({
-            carName: item.name,
-            imageUrl: item.imageUrl || '',
-            projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
-            rim: metadata.rim || 'Standard Alloy Rims',
-            texture: metadata.texture || 'Standard Texture',
-            speed: metadata.speed || 'Standard Speed',
-            brake: metadata.brake || 'Standard Brakes',
-            control: metadata.control || 'Standard Control',
-            ownerAddress: user.walletAddress,
-          }));
-
-          const results = await mintMultipleNFTs(mintParams, user.walletAddress);
-          
-          // Store all successfully minted NFTs in database
-          for (const mintResult of results) {
-            if (mintResult.success && mintResult.nftObjectId) {
-              await prisma.nFT.create({
-                data: {
-                  tokenId: mintResult.nftObjectId,
-                  suiObjectId: mintResult.nftObjectId,
-                  name: item.name,
-                  description: item.description,
-                  imageUrl: item.imageUrl,
-                  ownerAddress: user.walletAddress,
-                  creator: user.walletAddress,
-                  metadata: {
-                    purchaseId: result.purchase.id,
-                    kioskId: mintResult.kioskId,
-                    kioskOwnerCapId: mintResult.kioskOwnerCapId,
-                    transactionDigest: mintResult.transactionDigest,
-                  },
-                },
-              });
-              console.log(`✅ NFT minted and stored: ${mintResult.nftObjectId}`);
-            }
-          }
-          mintResults = results;
-        }
-      } catch (mintError: any) {
-        // Log error but don't fail the purchase - user already paid
-        console.error('❌ Error minting NFT on-chain (purchase still successful):', mintError);
-        // Store error in purchase metadata for manual review
-        await prisma.marketplacePurchase.update({
-          where: { id: result.purchase.id },
+        // Get car type and collection ID for this NFT
+        const { getCarTypeFromName } = await import('@/lib/nft-mint');
+        const { getCollectionId } = await import('@/lib/collection-map');
+        const carType = getCarTypeFromName(item.name);
+        const collectionId = getCollectionId(carType);
+        
+        // Store NFT in database with all details
+        const createdNFT = await prisma.nFT.create({
           data: {
+            tokenId: nftVerificationResult.nftObjectId,
+            suiObjectId: nftVerificationResult.nftObjectId,
+            collectionId: collectionId,
+            name: item.name,
+            description: item.description,
+            imageUrl: item.imageUrl,
+            projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
+            ownerAddress: user.walletAddress,
+            creator: user.walletAddress,
+            alloyRim: metadata.rim || 'Standard Alloy Rims',
+            frontBonnet: metadata.texture || 'Standard Texture',
+            backBonnet: metadata.speed || 'Standard Speed',
             metadata: {
-              ...(result.purchase.metadata && typeof result.purchase.metadata === 'object' ? result.purchase.metadata : {}),
-              mintError: mintError.message,
+              purchaseId: result.purchase.id,
+              kioskId: nftVerificationResult.kioskId,
+              kioskOwnerCapId: nftVerificationResult.kioskOwnerCapId,
+              transactionDigest: paymentTxHash,
+              carType: carType,
+              rim: metadata.rim || 'Standard Alloy Rims',
+              texture: metadata.texture || 'Standard Texture',
+              speed: metadata.speed || 'Standard Speed',
+              brake: metadata.brake || 'Standard Brakes',
+              control: metadata.control || 'Standard Control',
             },
           },
         });
+        
+        // Update transaction record to include NFT details
+        await prisma.transaction.updateMany({
+          where: {
+            suiTxHash: paymentTxHash,
+            userId: user.id,
+          },
+          data: {
+            metadata: {
+              itemId: id,
+              itemName: item.name,
+              purchaseId: result.purchase.id,
+              quantity: quantity,
+              paymentMethod: 'crypto_wallet',
+              nftId: createdNFT.id,
+              nftTokenId: createdNFT.tokenId,
+              nftSuiObjectId: createdNFT.suiObjectId,
+              nftMintTxDigest: paymentTxHash,
+              kioskId: nftVerificationResult.kioskId,
+              kioskOwnerCapId: nftVerificationResult.kioskOwnerCapId,
+            },
+          },
+        });
+        
+        console.log(`✅ NFT saved to database: ${nftVerificationResult.nftObjectId}`);
+      } catch (saveError: any) {
+        console.error('❌ Error saving NFT to database:', saveError);
+        // Don't fail the purchase - transaction already succeeded
+      }
       }
     }
 
@@ -355,14 +489,13 @@ export async function POST(
         totalPrice,
         remainingBalance: result.updatedUser?.blastwheelzBalance?.toString() || '0',
       },
-      nfts: item.type === 'NFT' ? mintResults.map(r => ({
-        success: r.success,
-        nftObjectId: r.nftObjectId,
-        kioskId: r.kioskId,
-        kioskOwnerCapId: r.kioskOwnerCapId,
-        transactionDigest: r.transactionDigest,
-        error: r.error,
-      })) : undefined,
+      nft: item.type === 'NFT' && nftVerificationResult ? {
+        success: true,
+        nftObjectId: nftVerificationResult.nftObjectId,
+        kioskId: nftVerificationResult.kioskId,
+        kioskOwnerCapId: nftVerificationResult.kioskOwnerCapId,
+        transactionDigest: mintTxHash || paymentTxHash,
+      } : undefined,
     });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {

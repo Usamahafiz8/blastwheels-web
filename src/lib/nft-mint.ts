@@ -1,7 +1,12 @@
 import { Transaction } from '@mysten/sui/transactions';
+import { SUI_CONFIG } from './sui';
 
-export const NFT_PACKAGE_ID = '0xc9c2874f06b387532b935c325c88e87fd64c7fe0a7bc0edaa60cf3cc3953e340';
+// Use environment variable or fallback to SUI_CONFIG
+export const NFT_PACKAGE_ID = process.env.NFT_PACKAGE_ID || SUI_CONFIG.nftPackageId;
 export const NFT_MODULE = 'blastwheelz';
+
+// Note: These are deprecated - use getCollectionId() and getTransferPolicyId() instead
+// Keeping for backward compatibility but they should not be used
 export const COLLECTION_ID = '0x819898fdca97f6fb595f3808dcaf9a7b4703cdf0416871f4d8c3f8b1adeb6b94';
 // Note: This should be the TransferPolicy object ID, not the TransferPolicyCap
 // The mint function requires &mut TransferPolicy<NFT<T>>, not the cap

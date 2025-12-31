@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import Toast from '@/components/Toast';
+import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { suiClient, SUI_CONFIG } from '@/lib/sui';
+import { buildPurchaseAndMintTransaction } from '@/lib/nft-purchase-transaction';
 
 interface MarketplaceItem {
   id: string;
@@ -21,6 +25,8 @@ interface MarketplaceItem {
 
 export default function MarketplacePage() {
   const { user } = useAuth();
+  const account = useCurrentAccount();
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
@@ -99,7 +105,8 @@ export default function MarketplacePage() {
     }
 
     setSelectedItem(item);
-    setQuantity(1);
+    // For NFT items, limit quantity to 1 (one transaction per NFT)
+    setQuantity(item.type === 'NFT' ? 1 : 1);
     setShowPurchaseModal(true);
   };
 
@@ -108,26 +115,128 @@ export default function MarketplacePage() {
 
     setPurchasing(true);
     try {
-      const response = await apiClient.purchaseMarketplaceItem(selectedItem.id, {
-        quantity,
-      });
+      // For NFT items, user signs mint transaction with their wallet (pays gas)
+      // Database balance is used for purchase price
+      if (selectedItem.type === 'NFT') {
+        // Check database balance first
+        const totalPrice = Number(selectedItem.price) * quantity;
+        const userBalance = Number(blastwheelzBalance);
 
-      if (response.error) {
-        setToast({
-          message: response.error,
-          isVisible: true,
-          type: 'error',
+        if (userBalance < totalPrice) {
+          setToast({
+            message: `Insufficient balance. Required: ${totalPrice.toFixed(2)} blastwheelz, Available: ${userBalance.toFixed(2)}`,
+            isVisible: true,
+            type: 'error',
+          });
+          setPurchasing(false);
+          return;
+        }
+
+        // User must connect wallet to sign mint transaction
+        if (!account?.address) {
+          setToast({
+            message: 'Please connect your wallet to sign the NFT mint transaction',
+            isVisible: true,
+            type: 'error',
+          });
+          setPurchasing(false);
+          return;
+        }
+
+        // Get metadata for NFT
+        const metadata = (selectedItem as any).metadata || {};
+
+        // Build mint transaction (user will sign this and pay gas)
+        const { buildMintOnlyTransaction } = await import('@/lib/nft-mint-transaction');
+        const mintTx = await buildMintOnlyTransaction({
+          carName: selectedItem.name,
+          imageUrl: selectedItem.imageUrl || '',
+          projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
+          rim: metadata.rim || 'Standard Alloy Rims',
+          texture: metadata.texture || 'Standard Texture',
+          speed: metadata.speed || 'Standard Speed',
+          brake: metadata.brake || 'Standard Brakes',
+          control: metadata.control || 'Standard Control',
+          userWalletAddress: account.address,
         });
-      } else if (response.data) {
-        setToast({
-          message: `Successfully purchased ${quantity}x ${selectedItem.name}!`,
-          isVisible: true,
-          type: 'success',
+
+        // User signs and executes the mint transaction (pays gas from their wallet)
+        signAndExecute(
+          {
+            transaction: mintTx,
+            options: {
+              showEffects: true,
+              showBalanceChanges: true,
+              showObjectChanges: true,
+            },
+          },
+          {
+            onSuccess: async (result) => {
+              if (result.digest) {
+                // After successful mint, complete purchase with transaction hash
+                // Backend will verify the mint and deduct from database balance
+                const purchaseResponse = await apiClient.purchaseMarketplaceItem(selectedItem.id, {
+                  quantity,
+                  mintTxHash: result.digest, // Pass the mint transaction hash
+                  useDatabaseBalance: true,
+                });
+
+                if (purchaseResponse.error) {
+                  setToast({
+                    message: purchaseResponse.error,
+                    isVisible: true,
+                    type: 'error',
+                  });
+                } else if (purchaseResponse.data) {
+                  const hasNFT = purchaseResponse.data.nft?.success;
+                  setToast({
+                    message: `Successfully purchased ${quantity}x ${selectedItem.name}! ${hasNFT ? 'NFT minted and transferred to your wallet.' : ''}`,
+                    isVisible: true,
+                    type: 'success',
+                  });
+                  setShowPurchaseModal(false);
+                  setSelectedItem(null);
+                  // Reload items and balance
+                  await Promise.all([loadItems(), loadBalance()]);
+                }
+              }
+              setPurchasing(false);
+            },
+            onError: (error: any) => {
+              console.error('Mint transaction error:', error);
+              setToast({
+                message: error.message || 'Failed to mint NFT. Please try again.',
+                isVisible: true,
+                type: 'error',
+              });
+              setPurchasing(false);
+            },
+          }
+        );
+      } else {
+        // For non-NFT items, use database balance
+        const response = await apiClient.purchaseMarketplaceItem(selectedItem.id, {
+          quantity,
         });
-        setShowPurchaseModal(false);
-        setSelectedItem(null);
-        // Reload items and balance
-        await Promise.all([loadItems(), loadBalance()]);
+
+        if (response.error) {
+          setToast({
+            message: response.error,
+            isVisible: true,
+            type: 'error',
+          });
+        } else if (response.data) {
+          setToast({
+            message: `Successfully purchased ${quantity}x ${selectedItem.name}!`,
+            isVisible: true,
+            type: 'success',
+          });
+          setShowPurchaseModal(false);
+          setSelectedItem(null);
+          // Reload items and balance
+          await Promise.all([loadItems(), loadBalance()]);
+        }
+        setPurchasing(false);
       }
     } catch (error: any) {
       console.error('Purchase error:', error);
@@ -136,7 +245,6 @@ export default function MarketplacePage() {
         isVisible: true,
         type: 'error',
       });
-    } finally {
       setPurchasing(false);
     }
   };
@@ -154,9 +262,15 @@ export default function MarketplacePage() {
 
   const canPurchase = () => {
     if (!selectedItem || !user) return false;
-    const balance = Number(blastwheelzBalance);
-    const total = getTotalPrice();
-    return balance >= total && quantity > 0 && quantity <= getMaxQuantity();
+    if (selectedItem.type === 'NFT') {
+      // For NFT items, wallet connection is required
+      return !!account?.address && quantity > 0 && quantity <= getMaxQuantity();
+    } else {
+      // For non-NFT items, check database balance
+      const balance = Number(blastwheelzBalance);
+      const total = getTotalPrice();
+      return balance >= total && quantity > 0 && quantity <= getMaxQuantity();
+    }
   };
 
   return (
@@ -340,17 +454,19 @@ export default function MarketplacePage() {
                   <input
                     type="number"
                     min="1"
-                    max={getMaxQuantity()}
+                    max={selectedItem.type === 'NFT' ? 1 : getMaxQuantity()}
                     value={quantity}
                     onChange={(e) => {
                       const val = parseInt(e.target.value) || 1;
-                      setQuantity(Math.max(1, Math.min(val, getMaxQuantity())));
+                      const maxQty = selectedItem.type === 'NFT' ? 1 : getMaxQuantity();
+                      setQuantity(Math.max(1, Math.min(val, maxQty)));
                     }}
-                    className="w-20 px-2 py-1 bg-white/5 border border-orange-500/30 rounded text-white text-center focus:outline-none focus:border-orange-500/60"
+                    disabled={selectedItem.type === 'NFT'}
+                    className="w-20 px-2 py-1 bg-white/5 border border-orange-500/30 rounded text-white text-center focus:outline-none focus:border-orange-500/60 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
-                    onClick={() => setQuantity(Math.min(getMaxQuantity(), quantity + 1))}
-                    disabled={quantity >= getMaxQuantity()}
+                    onClick={() => setQuantity(Math.min(selectedItem.type === 'NFT' ? 1 : getMaxQuantity(), quantity + 1))}
+                    disabled={quantity >= (selectedItem.type === 'NFT' ? 1 : getMaxQuantity())}
                     className="px-3 py-1 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded"
                   >
                     +
@@ -360,6 +476,11 @@ export default function MarketplacePage() {
               {selectedItem.stock !== null && (
                 <p className="text-white/50 text-xs text-right">
                   {selectedItem.stock} available
+                </p>
+              )}
+              {selectedItem.type === 'NFT' && (
+                <p className="text-blue-400 text-xs mt-2">
+                  Note: NFT purchases are limited to 1 per transaction
                 </p>
               )}
               <div className="flex items-center justify-between p-3 bg-white/5 border border-orange-500/20 rounded-lg mt-4">
@@ -378,6 +499,18 @@ export default function MarketplacePage() {
                 <p className="text-red-400 text-xs mt-2 text-right">
                   Insufficient balance
                 </p>
+              )}
+              {selectedItem.type === 'NFT' && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg mt-2">
+                  <p className="text-blue-400 text-sm">
+                    💎 NFT will be minted and transferred to your wallet address
+                  </p>
+                  {!user?.walletAddress && !account?.address && (
+                    <p className="text-yellow-400 text-xs mt-1">
+                      Please set your wallet address in your profile or connect your wallet
+                    </p>
+                  )}
+                </div>
               )}
             </div>
             <div className="flex gap-3">

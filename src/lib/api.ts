@@ -595,7 +595,29 @@ class ApiClient {
     }>(`/marketplace/items/${id}`);
   }
 
-  async purchaseMarketplaceItem(id: string, payload: { quantity?: number }) {
+  async prepareMarketplacePayment(id: string, payload: { quantity?: number }) {
+    return this.request<{
+      message: string;
+      payment: {
+        amount: string;
+        amountInSmallestUnit: string;
+        itemName: string;
+        quantity: number;
+        treasuryAddress: string;
+        userWalletAddress: string;
+      };
+      instructions: {
+        step1: string;
+        step2: string;
+        step3: string;
+      };
+    }>(`/marketplace/items/${id}/prepare-payment`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async purchaseMarketplaceItem(id: string, payload: { quantity?: number; paymentTxHash?: string; mintTxHash?: string; useDatabaseBalance?: boolean }) {
     return this.request<{
       message: string;
       purchase: {
@@ -604,6 +626,14 @@ class ApiClient {
         quantity: number;
         totalPrice: number;
         remainingBalance: string;
+      };
+      nft?: {
+        success: boolean;
+        nftObjectId?: string;
+        kioskId?: string;
+        kioskOwnerCapId?: string;
+        transactionDigest?: string;
+        error?: string;
       };
     }>(`/marketplace/items/${id}/purchase`, {
       method: 'POST',

@@ -27,6 +27,7 @@
     "set-premium-prices": "tsx scripts/set-premium-prices.ts",
     "update-car-descriptions": "tsx scripts/update-car-descriptions.ts",
     "create-all-collections": "tsx scripts/create-all-collections.ts",
+    "share-collections": "tsx scripts/share-collections.ts",
     "deploy": "./deploy.sh"
   },
   "dependencies": {
