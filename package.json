@@ -22,6 +22,10 @@
     "delete-test-items": "tsx scripts/delete-test-items.ts",
     "update-car-prices": "tsx scripts/update-car-prices.ts",
     "update-specific-car-prices": "tsx scripts/update-specific-car-prices.ts",
+    "add-more-cars": "tsx scripts/add-more-cars.ts",
+    "cleanup-marketplace": "tsx scripts/cleanup-marketplace.ts",
+    "set-premium-prices": "tsx scripts/set-premium-prices.ts",
+    "update-car-descriptions": "tsx scripts/update-car-descriptions.ts",
     "deploy": "./deploy.sh"
   },
   "dependencies": {

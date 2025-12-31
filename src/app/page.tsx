@@ -525,6 +525,38 @@ export default function Home() {
                 </div>
               </div>
             ))}
+            
+            {/* Explore Marketplace Card */}
+            <Link
+              href="/marketplace"
+              className="glass border-2 border-orange-500/30 rounded-lg overflow-hidden hover-3d transition-all duration-300 hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20 group flex flex-col"
+            >
+              <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-orange-500/20 via-orange-600/20 to-orange-500/20 flex items-center justify-center">
+                <div className="text-center p-6 relative z-10 w-full h-full flex items-center justify-center">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 mx-auto bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform p-3 sm:p-4">
+                    <img
+                      src="/BlastWheels_Logo_512.png"
+                      alt="Blast Wheels"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+              </div>
+              <div className="p-4 sm:p-5 flex-1 flex flex-col justify-center">
+                <h3 className="text-xl sm:text-2xl font-extrabold text-white mb-2 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent text-center">
+                  Many More
+                </h3>
+                <p className="text-xs sm:text-sm text-white/80 leading-relaxed text-center mb-4">
+                  Let's explore the marketplace
+                </p>
+                <div className="text-center">
+                  <span className="inline-block px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-lg text-sm group-hover:from-orange-600 group-hover:to-orange-700 transition-all">
+                    View Marketplace →
+                  </span>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
       </section>
