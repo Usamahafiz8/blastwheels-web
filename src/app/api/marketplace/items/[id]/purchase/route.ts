@@ -41,11 +41,12 @@ export async function POST(
     const user = await requireAuth(req);
     const { id } = await context.params;
     const body = await req.json();
-    const { quantity = 1, paymentTxHash, mintTxHash, useDatabaseBalance = false } = body as { 
+    const { quantity = 1, paymentTxHash, mintTxHash, useDatabaseBalance = false, imageUrl } = body as { 
       quantity?: number; 
       paymentTxHash?: string;
       mintTxHash?: string;
       useDatabaseBalance?: boolean;
+      imageUrl?: string;
     };
 
     if (!quantity || quantity < 1) {
@@ -416,10 +417,13 @@ export async function POST(
           // Get metadata from item or use defaults
           const metadata = (item.metadata as any) || {};
           
+          // Use imageUrl from request body if provided, otherwise fall back to item.imageUrl
+          const finalImageUrl = imageUrl || item.imageUrl || '';
+          
           // Mint NFT using admin wallet
           const mintResult = await mintNFTOnChain({
             carName: item.name,
-            imageUrl: item.imageUrl || '',
+            imageUrl: finalImageUrl,
             projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
             rim: metadata.rim || 'Standard Alloy Rims',
             texture: metadata.texture || 'Standard Texture',
@@ -444,7 +448,7 @@ export async function POST(
                 collectionId: collectionId,
                 name: item.name,
                 description: item.description,
-                imageUrl: item.imageUrl,
+                imageUrl: finalImageUrl, // Use the same imageUrl that was used for minting
                 projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
                 ownerAddress: user.walletAddress,
                 creator: user.walletAddress,

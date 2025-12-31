@@ -28,6 +28,7 @@
     "update-car-descriptions": "tsx scripts/update-car-descriptions.ts",
     "create-all-collections": "tsx scripts/create-all-collections.ts",
     "share-collections": "tsx scripts/share-collections.ts",
+    "update-aston-manni-display": "tsx scripts/update-aston-manni-display.ts",
     "deploy": "./deploy.sh"
   },
   "dependencies": {

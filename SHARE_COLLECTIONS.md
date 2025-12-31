@@ -55,3 +55,4 @@ If you're logged in as an admin, you can also use the admin API endpoint:
 - The script will skip collections that are already shared
 - Safe to run multiple times
 
+

@@ -59,8 +59,11 @@ export async function buildMintOnlyTransaction(
   const getInitialSharedVersion = (owner: any): string | number | null => {
     if (!owner || typeof owner === 'string') return null;
     const ownerObj = owner as Record<string, any>;
-    if (ownerObj.Shared && typeof ownerObj.Shared === 'object' && ownerObj.Shared.initial_shared_version) {
-      return ownerObj.Shared.initial_shared_version;
+    if (ownerObj && 'Shared' in ownerObj && typeof ownerObj.Shared === 'object' && ownerObj.Shared !== null) {
+      const sharedObj = ownerObj.Shared as Record<string, any>;
+      if (sharedObj.initial_shared_version !== undefined) {
+        return sharedObj.initial_shared_version;
+      }
     }
     return null;
   };
@@ -71,7 +74,11 @@ export async function buildMintOnlyTransaction(
   const policySharedVersion = getInitialSharedVersion(policyObj.data?.owner);
 
   console.log('🔧 Collection is shared:', isCollectionShared);
+  console.log('🔧 Collection shared version:', collectionSharedVersion);
+  console.log('🔧 Collection owner:', JSON.stringify(collectionObj.data?.owner, null, 2));
   console.log('🔧 Transfer Policy is shared:', isPolicyShared);
+  console.log('🔧 Transfer Policy shared version:', policySharedVersion);
+  console.log('🔧 Transfer Policy owner:', JSON.stringify(policyObj.data?.owner, null, 2));
 
   if (!isCollectionShared || !collectionSharedVersion) {
     const errorMessage = 
@@ -79,7 +86,8 @@ export async function buildMintOnlyTransaction(
       `To enable user wallet minting, collections must be shared objects on the Sui blockchain. ` +
       `Please run: npm run share-collections (or npx tsx scripts/share-collections.ts) ` +
       `with your ADMIN_PRIVATE_KEY or ADMIN_MNEMONIC set in your .env file. ` +
-      `Collection ID: ${collectionId} (Car Type: ${carType})`;
+      `Collection ID: ${collectionId} (Car Type: ${carType}). ` +
+      `Collection owner type: ${typeof collectionObj.data?.owner}, isShared: ${isCollectionShared}, version: ${collectionSharedVersion}`;
     
     console.error('❌ Collection sharing error:', errorMessage);
     throw new Error(errorMessage);
@@ -89,7 +97,8 @@ export async function buildMintOnlyTransaction(
     const errorMessage = 
       `Transfer policy is not shared. ` +
       `To enable user wallet minting, transfer policies must be shared objects on the Sui blockchain. ` +
-      `Transfer Policy ID: ${transferPolicyId} (Car Type: ${carType})`;
+      `Transfer Policy ID: ${transferPolicyId} (Car Type: ${carType}). ` +
+      `Policy owner type: ${typeof policyObj.data?.owner}, isShared: ${isPolicyShared}, version: ${policySharedVersion}`;
     
     console.error('❌ Transfer policy sharing error:', errorMessage);
     throw new Error(errorMessage);

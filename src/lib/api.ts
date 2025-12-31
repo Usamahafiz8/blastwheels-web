@@ -633,7 +633,7 @@ class ApiClient {
     });
   }
 
-  async purchaseMarketplaceItem(id: string, payload: { quantity?: number; paymentTxHash?: string; mintTxHash?: string; useDatabaseBalance?: boolean }) {
+  async purchaseMarketplaceItem(id: string, payload: { quantity?: number; paymentTxHash?: string; mintTxHash?: string; useDatabaseBalance?: boolean; imageUrl?: string }) {
     return this.request<{
       message: string;
       purchase: {

@@ -141,139 +141,34 @@ export default function MarketplacePage() {
           return;
         }
 
-        // Get metadata for NFT
-        const metadata = (selectedItem as any).metadata || {};
+        // For NFT items, use admin wallet to mint (no user wallet transaction needed)
+        // The backend will mint using admin wallet and deduct from database balance
+        const purchaseResponse = await apiClient.purchaseMarketplaceItem(selectedItem.id, {
+          quantity,
+          useDatabaseBalance: true, // Deduct from database balance
+          imageUrl: selectedItem.imageUrl || '', // Pass image URL for minting
+          // No mintTxHash - backend will mint using admin wallet
+        });
 
-        // Build mint transaction (user will sign this and pay gas from their Sui wallet)
-        let mintTx;
-        try {
-          const { buildMintOnlyTransaction } = await import('@/lib/nft-mint-transaction');
-          mintTx = await buildMintOnlyTransaction({
-            carName: selectedItem.name,
-            imageUrl: selectedItem.imageUrl || '',
-            projectUrl: metadata.projectUrl || 'https://blastwheelz.io',
-            rim: metadata.rim || 'Standard Alloy Rims',
-            texture: metadata.texture || 'Standard Texture',
-            speed: metadata.speed || 'Standard Speed',
-            brake: metadata.brake || 'Standard Brakes',
-            control: metadata.control || 'Standard Control',
-            userWalletAddress: account.address,
+        if (purchaseResponse.error) {
+          setToast({
+            message: purchaseResponse.error,
+            isVisible: true,
+            type: 'error',
           });
-        } catch (buildError: any) {
-          // Handle collection not shared error
-          if (buildError.message?.includes('not shared')) {
-            // If user is admin and we haven't tried sharing yet, try to automatically share collections
-            if (user?.role === 'ADMIN' && !sharingCollections) {
-              setSharingCollections(true);
-              setToast({
-                message: 'Collections not shared. Attempting to share collections automatically...',
-                isVisible: true,
-                type: 'info',
-              });
-              
-              try {
-                const shareResponse = await apiClient.shareCollections();
-                setSharingCollections(false);
-                
-                if (shareResponse.data) {
-                  const { summary } = shareResponse.data;
-                  if (summary.successful > 0 || summary.alreadyShared > 0) {
-                    setToast({
-                      message: `Collections are now shared! (${summary.successful} shared, ${summary.alreadyShared} already shared). Please try purchasing again.`,
-                      isVisible: true,
-                      type: 'success',
-                    });
-                    // Don't auto-retry, let user click purchase again
-                  } else {
-                    setToast({
-                      message: 'Failed to share collections. Please check admin credentials and run: npm run share-collections',
-                      isVisible: true,
-                      type: 'error',
-                    });
-                  }
-                } else {
-                  setToast({
-                    message: 'Failed to share collections. Please run: npm run share-collections',
-                    isVisible: true,
-                    type: 'error',
-                  });
-                }
-              } catch (shareError: any) {
-                setSharingCollections(false);
-                setToast({
-                  message: `Failed to share collections: ${shareError.message || 'Unknown error'}. Please run: npm run share-collections`,
-                  isVisible: true,
-                  type: 'error',
-                });
-              }
-            } else {
-              // Regular user or already tried sharing - show friendly message
-              setToast({
-                message: 'NFT minting is temporarily unavailable. Collections need to be shared on-chain. Please contact support or try again later.',
-                isVisible: true,
-                type: 'error',
-              });
-            }
-          } else {
-            setToast({
-              message: buildError.message || 'Failed to prepare NFT mint transaction',
-              isVisible: true,
-              type: 'error',
-            });
-          }
-          setPurchasing(false);
-          return;
+        } else if (purchaseResponse.data) {
+          const hasNFT = purchaseResponse.data.nft?.success;
+          setToast({
+            message: `Successfully purchased ${quantity}x ${selectedItem.name}! ${hasNFT ? 'NFT minted and transferred to your wallet.' : ''}`,
+            isVisible: true,
+            type: 'success',
+          });
+          setShowPurchaseModal(false);
+          setSelectedItem(null);
+          // Reload items and balance
+          await Promise.all([loadItems(), loadBalance()]);
         }
-
-        // User signs and executes the mint transaction (pays gas from their Sui wallet)
-        // Purchase price is deducted from database balance (blastwheelz)
-        signAndExecute(
-          {
-            transaction: mintTx,
-          },
-          {
-            onSuccess: async (result) => {
-              if (result.digest) {
-                // After successful mint, complete purchase with transaction hash
-                // Backend will verify the mint and deduct from database balance
-                const purchaseResponse = await apiClient.purchaseMarketplaceItem(selectedItem.id, {
-                  quantity,
-                  mintTxHash: result.digest, // Pass the mint transaction hash
-                  useDatabaseBalance: true, // Deduct from database balance
-                });
-
-                if (purchaseResponse.error) {
-                  setToast({
-                    message: purchaseResponse.error,
-                    isVisible: true,
-                    type: 'error',
-                  });
-                } else if (purchaseResponse.data) {
-                  const hasNFT = purchaseResponse.data.nft?.success;
-                  setToast({
-                    message: `Successfully purchased ${quantity}x ${selectedItem.name}! ${hasNFT ? 'NFT minted and transferred to your wallet.' : ''}`,
-                    isVisible: true,
-                    type: 'success',
-                  });
-                  setShowPurchaseModal(false);
-                  setSelectedItem(null);
-                  // Reload items and balance
-                  await Promise.all([loadItems(), loadBalance()]);
-                }
-              }
-              setPurchasing(false);
-            },
-            onError: (error: any) => {
-              console.error('Mint transaction error:', error);
-              setToast({
-                message: error.message || 'Failed to mint NFT. Please try again.',
-                isVisible: true,
-                type: 'error',
-              });
-              setPurchasing(false);
-            },
-          }
-        );
+        setPurchasing(false);
       } else {
         // For non-NFT items, use database balance
         // For non-NFT items, use database balance
