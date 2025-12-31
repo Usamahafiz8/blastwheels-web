@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+/**
+ * @swagger
+ * /api/users/game-history:
+ *   get:
+ *     summary: Get current user's game history
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of results per page
+ *     responses:
+ *       200:
+ *         description: Paginated game history
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(req: NextRequest) {
   try {
     const user = await requireAuth(req);

@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+/**
+ * @swagger
+ * /api/games/{id}:
+ *   get:
+ *     summary: Get a specific game session
+ *     tags: [Games]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Game session ID
+ *     responses:
+ *       200:
+ *         description: Game session details
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Game session not found
+ */
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }

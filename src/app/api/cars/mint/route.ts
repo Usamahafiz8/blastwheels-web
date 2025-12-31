@@ -17,6 +17,16 @@ export async function POST(req: NextRequest) {
   );
 }
 
+/**
+ * @swagger
+ * /api/cars/mint:
+ *   get:
+ *     summary: Get minting information (deprecated - minting happens client-side)
+ *     tags: [Cars]
+ *     responses:
+ *       501:
+ *         description: Not implemented - minting is handled client-side
+ */
 export async function GET(req: NextRequest) {
   return NextResponse.json(
     { error: 'This endpoint is not implemented. Minting happens client-side.' },

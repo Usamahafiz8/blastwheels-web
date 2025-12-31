@@ -2,6 +2,50 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+/**
+ * @swagger
+ * /api/users/profile:
+ *   get:
+ *     summary: Get current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile with stats and recent game sessions
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *   put:
+ *     summary: Update current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 minLength: 3
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               walletAddress:
+ *                 type: string
+ *                 description: Sui wallet address (must start with 0x)
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: Invalid input or username/email already exists
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(req: NextRequest) {
   try {
     const user = await requireAuth(req);

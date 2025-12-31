@@ -2,6 +2,42 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+/**
+ * @swagger
+ * /api/admin/stats:
+ *   get:
+ *     summary: Get platform statistics (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Platform statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     totalUsers:
+ *                       type: integer
+ *                     activeUsers:
+ *                       type: integer
+ *                     totalGames:
+ *                       type: integer
+ *                     completedGames:
+ *                       type: integer
+ *                     totalTransactions:
+ *                       type: integer
+ *                     totalVolume:
+ *                       type: number
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (not admin)
+ */
 export async function GET(req: NextRequest) {
   try {
     await requireRole(req, 'ADMIN');

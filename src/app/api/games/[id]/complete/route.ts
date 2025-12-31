@@ -2,6 +2,47 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+/**
+ * @swagger
+ * /api/games/{id}/complete:
+ *   post:
+ *     summary: Complete a game session
+ *     tags: [Games]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Game session ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               position:
+ *                 type: integer
+ *                 description: Final position in the race (1 = winner)
+ *               earnings:
+ *                 type: number
+ *                 description: Prize earnings from the game
+ *               transactionId:
+ *                 type: string
+ *                 description: Transaction hash for the reward payment
+ *     responses:
+ *       200:
+ *         description: Game session completed successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Game session not found
+ */
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }

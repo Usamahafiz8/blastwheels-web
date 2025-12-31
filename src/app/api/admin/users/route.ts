@@ -2,6 +2,41 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     summary: Get all users with pagination (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of results per page
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [ADMIN, PLAYER]
+ *         description: Filter by user role
+ *     responses:
+ *       200:
+ *         description: Paginated list of users
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (not admin)
+ */
 export async function GET(req: NextRequest) {
   try {
     await requireRole(req, 'ADMIN');

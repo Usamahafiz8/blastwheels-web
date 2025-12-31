@@ -22,6 +22,12 @@ enum GameStatus {
   CANCELLED
 }
 
+enum GameType {
+  REGULAR    // Anyone can join, max 8 players
+  FRIENDS    // Friends can join, max 8 players
+  ONE_VS_ONE // 1v1 game, 2 players
+}
+
 model User {
   id                 String   @id @default(uuid())
   email              String?  @unique
@@ -39,6 +45,7 @@ model User {
   transactions         Transaction[]
   playerStats          PlayerStats?
   marketplacePurchases MarketplacePurchase[]
+  leaderboardEntries   LeaderboardEntry[]
 
   @@index([walletAddress])
   @@index([email])
@@ -69,18 +76,53 @@ model GameSession {
   userId        String
   user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   status        GameStatus @default(PENDING)
+  gameType      GameType   @default(REGULAR)
   entryFee      Decimal    @db.Decimal(18, 8)
   prizePool     Decimal    @default(0) @db.Decimal(18, 8)
   position      Int?
   earnings      Decimal    @default(0) @db.Decimal(18, 8)
   transactionId String?
+  gameId        String? // Reference to the game room/lobby
+  metadata      Json? // Additional game data (e.g., friend IDs for FRIENDS games)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   completedAt   DateTime?
 
+  // Relations
+  leaderboardEntries LeaderboardEntry[]
+
   @@index([userId])
   @@index([status])
+  @@index([gameType])
+  @@index([gameId])
   @@index([createdAt])
+}
+
+model LeaderboardEntry {
+  id            String   @id @default(uuid())
+  gameType      GameType
+  gameSessionId String?
+  gameSession   GameSession? @relation(fields: [gameSessionId], references: [id], onDelete: SetNull)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username      String   // Denormalized for performance
+  walletAddress String   // Denormalized for performance
+  position      Int      // Final position in the game (1 = winner)
+  score         Decimal  @default(0) @db.Decimal(18, 8) // Game score/points
+  earnings      Decimal  @default(0) @db.Decimal(18, 8) // Prize earnings
+  entryFee      Decimal  @db.Decimal(18, 8)
+  gameId        String? // Reference to the game room/lobby
+  metadata      Json? // Additional game data (lap times, best time, etc.)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([gameType])
+  @@index([userId])
+  @@index([gameId])
+  @@index([position])
+  @@index([score])
+  @@index([createdAt])
+  // Note: Unique constraint on gameId is handled in application logic since gameId can be null
 }
 
 model Transaction {

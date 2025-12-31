@@ -1,0 +1,167 @@
+{
+  "packageId": "0xb3796e6befb4e0a63c1e9260abe3e3c1031d80e22691c4238c5b36cd24145ffd",
+  "network": "https://fullnode.mainnet.sui.io:443",
+  "createdAt": "2025-12-31T16:01:58.602Z",
+  "results": [
+    {
+      "carType": "HeBoomanator",
+      "collectionId": "0x1f9538890cf272ec7a0d6d98702afe7300cc2b57b1adc4bf9a7008c358431d21",
+      "success": true
+    },
+    {
+      "carType": "SuipremeSupra",
+      "collectionId": "0xaa84253e84d76e8f04aa0cfe9aa33aec5f3d85dd34a303a3e445c40f7f274300",
+      "success": true
+    },
+    {
+      "carType": "GoldenToiletGT",
+      "collectionId": "0x3572f5f2252c1e3adbb7dfbc983cb0bd61f950f874caf7f96618d45b180e216f",
+      "success": true
+    },
+    {
+      "carType": "FordFMBP1974",
+      "collectionId": "0x42eee8c48abafa47da5c191040a75668a1a1b127e4cedfa4fed0a55ab8ff3a6a",
+      "success": true
+    },
+    {
+      "carType": "SuiverseRegera",
+      "collectionId": "0x12718a9bf6ff7183bb6df67f39187599055fe84ecc86981a926a3c8e66301e4b",
+      "success": true
+    },
+    {
+      "carType": "AquaGTR",
+      "collectionId": "0x90cd67a371b1d0d8a175d2666993bbdaeb111d1723d756852383d9230670fe43",
+      "success": true
+    },
+    {
+      "carType": "SkelSuiEnergyGT25",
+      "collectionId": "0x71cd591d828683e817f118ede35bee84e4ce246e85b59e0db6c1510cb886ede1",
+      "success": true
+    },
+    {
+      "carType": "MercedesBuildersG550",
+      "collectionId": "0xa05f39477dac10e4c1bfd2aa5a421f70c843c06123800f5feb00c68cf84e5b9a",
+      "success": true
+    },
+    {
+      "carType": "ArkLiveCyberVenture",
+      "collectionId": "0x4f88bdb1674e8a483a262e1876d3506ff52b41d1094d3f9440eb5f461e6e86c1",
+      "success": true
+    },
+    {
+      "carType": "AstonManni",
+      "collectionId": "0x38b14a290d3ed3415ff82f3f0372d4e17459bf7b5e232e5c2632cb09535405ac",
+      "success": true
+    },
+    {
+      "carType": "Juggernaut",
+      "collectionId": "0x83b4d9657ae5abcbc4564bf028ce18cfcc20386306e0e8ad06f7062f0462fca4",
+      "success": true
+    },
+    {
+      "carType": "NightViper",
+      "collectionId": "0x23a09c361c811f76946c43f8a73187bc28d10e54f7991969a7c66e8a8857718d",
+      "success": true
+    },
+    {
+      "carType": "BlazeHowler",
+      "collectionId": "0xa15e74bf1f1eff0be22b4c1081e4eb2bcffd7b9e79c706445a54a00f290848a2",
+      "success": true
+    },
+    {
+      "carType": "CrimsonPhantom",
+      "collectionId": "0x9c4aed30d8ed107b80b20559307d4b383b4c88fc79425531c5202fddc8b8d24d",
+      "success": true
+    },
+    {
+      "carType": "IronNomad",
+      "collectionId": "0xda0207a669b61d4218c1bcd3dbdf612612c66955c88851a0f88cdf8a5e1bd276",
+      "success": true
+    },
+    {
+      "carType": "NeonFang",
+      "collectionId": "0xcc460b7acbe8dd54b7380776317661f4e3b1ffba6035159a195faf3cf94be3e0",
+      "success": true
+    },
+    {
+      "carType": "RedlineReaper",
+      "collectionId": "0x7503e078ca4a0035ccae86e1390074616ef87bbf5e0ce04c306c7dfa09f44108",
+      "success": true
+    },
+    {
+      "carType": "BlueRupture",
+      "collectionId": "0xb6fc833fd662a17aa0bbb65962443ce65455e4fb880be2f80a5ef8f21ee5cfcc",
+      "success": true
+    },
+    {
+      "carType": "VenomCircuit",
+      "collectionId": "0x95b3c57c1ff3fe56572d166f8edca9ce014412880655341e41c2556fff0ec8a2",
+      "success": true
+    },
+    {
+      "carType": "UltraPulse",
+      "collectionId": "0xecffcbb48974f033a3dd574c3db803f637127d4de1949130585633ac30eb4ddb",
+      "success": true
+    },
+    {
+      "carType": "ScarletDominion",
+      "collectionId": "0x08eb6c652a0ee89cddbf37b753b1aea9a2f38462d8d2b8777dc1d0aac89e4a50",
+      "success": true
+    },
+    {
+      "carType": "SolarDrift",
+      "collectionId": "0x453dfd54906228525af87887e6d20247424e2b4ae6ffd7f630acda9920f170f7",
+      "success": true
+    },
+    {
+      "carType": "AzureStrike",
+      "collectionId": "0xfab93d7424b0884c9f3ccdd02027ec413a7bd09512e086c87e12d8c3591bbe7d",
+      "success": true
+    },
+    {
+      "carType": "BloodApex",
+      "collectionId": "0xf6a87bbcb434d6f4c47c131d027cfe93a40077eafd7238a3feffc4e2dfcc3aaf",
+      "success": true
+    },
+    {
+      "carType": "VelocityWarden",
+      "collectionId": "0xb0896cd55a2981239be2b58694de3343f29f12b3925723bbb7e977ae4c12af4f",
+      "success": true
+    },
+    {
+      "carType": "ToxicSurge",
+      "collectionId": "0x16211231f0a18058d7cc1ac12dad00930af7e202ea1d91427d823515259a19de",
+      "success": true
+    },
+    {
+      "carType": "GoldenRevenant",
+      "collectionId": "0xbeb2230cc868d4e4d253acfb493c3b267c65bd07885e09dfe0b7aa816c6f5cd8",
+      "success": true
+    },
+    {
+      "carType": "MidnightBrawler",
+      "collectionId": "0x1a3c45fd2b0d315594e35982a81783f71843f90ffe9bb11f27204fbdef0c19a7",
+      "success": true
+    },
+    {
+      "carType": "PhantomVector",
+      "collectionId": "0x450f2a2ffffb851c30754341de98cfc02f98c1892afa9895cdba8e27b7b76816",
+      "success": true
+    },
+    {
+      "carType": "EmeraldHavoc",
+      "collectionId": "0x2d12b7b67b512534dda8ad00775f432fa3f6b5d91d0ac08d713929b736a24c3c",
+      "success": true
+    },
+    {
+      "carType": "HyperDune",
+      "collectionId": "0xd9de5e718b9e1611e9be61f6489bb7d5d776c9625b75593da8064d533cfe5921",
+      "success": true
+    }
+  ],
+  "summary": {
+    "total": 31,
+    "successful": 31,
+    "failed": 0
+  }
+}

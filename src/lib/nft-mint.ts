@@ -8,43 +8,45 @@ export const COLLECTION_ID = '0x819898fdca97f6fb595f3808dcaf9a7b4703cdf0416871f4
 export const TRANSFER_POLICY_ID = '0x88f0b7cc96ed6e7ac15f3cd9728f5b0dc410454aea23d62d54c10e7ae2cab157';
 
 // Map car names to Move contract types
+// These are the actual car types defined in the Move contract
 export function getCarTypeFromName(carName: string): string {
   const name = carName.toLowerCase();
   
-  // Map car names to Move contract types
-  if (name.includes('mustang')) return 'Mustang';
-  if (name.includes('camaro')) return 'Camaro';
-  if (name.includes('corvette')) return 'Corvette';
-  if (name.includes('charger')) return 'Charger';
-  if (name.includes('challenger')) return 'Challenger';
-  if (name.includes('viper')) return 'Viper';
-  if (name.includes('supra')) return 'Supra';
-  if (name.includes('gtr') || name.includes('gt-r')) return 'GTR';
-  if (name.includes('nsx')) return 'NSX';
-  if (name.includes('rx7') || name.includes('rx-7')) return 'RX7';
-  if (name.includes('skyline')) return 'Skyline';
-  if (name.includes('silvia')) return 'Silvia';
-  if (name.includes('evo')) return 'Evo';
-  if (name.includes('sti')) return 'STI';
-  if (name.includes('m3')) return 'M3';
-  if (name.includes('m5')) return 'M5';
-  if (name.includes('rs6') || name.includes('rs-6')) return 'RS6';
-  if (name.includes('amg')) return 'AMG';
-  if (name.includes('gt3')) return 'GT3';
-  if (name.includes('porsche') && name.includes('911')) return 'Porsche911';
-  if (name.includes('cayenne')) return 'Cayenne';
-  if (name.includes('macan')) return 'Macan';
-  if (name.includes('panamera')) return 'Panamera';
-  if (name.includes('taycan')) return 'Taycan';
-  if (name.includes('model s')) return 'ModelS';
-  if (name.includes('model 3') || name.includes('model3')) return 'Model3';
-  if (name.includes('roadster')) return 'Roadster';
-  if (name.includes('cybertruck')) return 'Cybertruck';
-  if (name.includes('f150') || name.includes('f-150')) return 'F150';
-  if (name.includes('silverado')) return 'Silverado';
+  // Map car names to actual Move contract types
+  if (name.includes('boomanator') || name.includes('boom')) return 'HeBoomanator';
+  if (name.includes('suipreme') || name.includes('supra')) return 'SuipremeSupra';
+  if (name.includes('golden toilet') || name.includes('toilet')) return 'GoldenToiletGT';
+  if (name.includes('ford') && (name.includes('mbp') || name.includes('f-mbp'))) return 'FordFMBP1974';
+  if (name.includes('suiverse') || name.includes('regera')) return 'SuiverseRegera';
+  if (name.includes('aqua') || name.includes('gtr') || name.includes('gt-r')) return 'AquaGTR';
+  if (name.includes('skel') || name.includes('skel sui')) return 'SkelSuiEnergyGT25';
+  if (name.includes('mercedes') || name.includes('builders') || name.includes('g 550')) return 'MercedesBuildersG550';
+  if (name.includes('ark') || name.includes('cyberventure') || name.includes('live')) return 'ArkLiveCyberVenture';
+  if (name.includes('aston') || name.includes('manni')) return 'AstonManni';
+  if (name.includes('juggernaut')) return 'Juggernaut';
+  if (name.includes('night') && name.includes('viper')) return 'NightViper';
+  if (name.includes('blaze') || name.includes('howler')) return 'BlazeHowler';
+  if (name.includes('crimson') || name.includes('phantom')) return 'CrimsonPhantom';
+  if (name.includes('iron') || name.includes('nomad')) return 'IronNomad';
+  if (name.includes('neon') || name.includes('fang')) return 'NeonFang';
+  if (name.includes('redline') || name.includes('reaper')) return 'RedlineReaper';
+  if (name.includes('blue') || name.includes('rupture')) return 'BlueRupture';
+  if (name.includes('venom') || name.includes('circuit')) return 'VenomCircuit';
+  if (name.includes('ultra') || name.includes('pulse')) return 'UltraPulse';
+  if (name.includes('scarlet') || name.includes('dominion')) return 'ScarletDominion';
+  if (name.includes('solar') || name.includes('drift')) return 'SolarDrift';
+  if (name.includes('azure') || name.includes('strike')) return 'AzureStrike';
+  if (name.includes('blood') || name.includes('apex')) return 'BloodApex';
+  if (name.includes('velocity') || name.includes('warden')) return 'VelocityWarden';
+  if (name.includes('toxic') || name.includes('surge')) return 'ToxicSurge';
+  if (name.includes('golden') && name.includes('revenant')) return 'GoldenRevenant';
+  if (name.includes('midnight') || name.includes('brawler')) return 'MidnightBrawler';
+  if (name.includes('phantom') && name.includes('vector')) return 'PhantomVector';
+  if (name.includes('emerald') || name.includes('havoc')) return 'EmeraldHavoc';
+  if (name.includes('hyper') || name.includes('dune')) return 'HyperDune';
   
-  // Default to Mustang if no match
-  return 'Mustang';
+  // Default to HeBoomanator if no match (first car type)
+  return 'HeBoomanator';
 }
 
 /**
