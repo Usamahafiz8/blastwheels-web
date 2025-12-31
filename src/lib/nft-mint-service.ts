@@ -179,7 +179,11 @@ export async function mintNFTOnChain(params: MintNFTParams): Promise<MintNFTResu
     const sharedKiosk = objectChanges.find(
       (change: any) => {
         const isKiosk = change.objectType?.includes('kiosk::Kiosk');
-        const isShared = change.owner && 'Shared' in change.owner;
+        if (!change.owner) return false;
+        // Handle ObjectOwner type (can be string or object)
+        if (typeof change.owner === 'string') return false;
+        const ownerObj = change.owner as Record<string, unknown>;
+        const isShared = ownerObj !== null && 'Shared' in ownerObj;
         return isKiosk && isShared;
       }
     ) as { type: string; objectId: string; owner?: any } | undefined;

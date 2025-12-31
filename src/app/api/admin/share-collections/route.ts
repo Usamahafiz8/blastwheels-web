@@ -78,11 +78,19 @@ async function isObjectShared(objectId: string): Promise<boolean> {
       options: { showOwner: true },
     });
     
-    if (obj.data?.owner) {
-      return 'Shared' in obj.data.owner;
+    if (!obj.data?.owner) {
+      return false;
     }
     
-    return false;
+    // Check if owner is an object (not a string) and has 'Shared' property
+    const owner = obj.data.owner;
+    if (typeof owner === 'string') {
+      return false;
+    }
+    
+    // Type assertion: owner is an object at this point
+    const ownerObj = owner as Record<string, unknown>;
+    return ownerObj !== null && 'Shared' in ownerObj;
   } catch (error) {
     return false;
   }

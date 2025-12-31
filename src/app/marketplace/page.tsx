@@ -6,8 +6,6 @@ import { apiClient } from '@/lib/api';
 import Toast from '@/components/Toast';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
-import { suiClient, SUI_CONFIG } from '@/lib/sui';
-import { buildPurchaseAndMintTransaction } from '@/lib/nft-purchase-transaction';
 
 interface MarketplaceItem {
   id: string;
@@ -35,7 +33,7 @@ export default function MarketplacePage() {
   const [sharingCollections, setSharingCollections] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [blastwheelzBalance, setBlastwheelzBalance] = useState<string>('0');
-  const [toast, setToast] = useState({ message: '', isVisible: false, type: 'success' as 'success' | 'error' });
+  const [toast, setToast] = useState({ message: '', isVisible: false, type: 'success' as 'success' | 'error' | 'info' });
   const [filter, setFilter] = useState<{
     status?: 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT';
     type?: string;
@@ -232,11 +230,6 @@ export default function MarketplacePage() {
         signAndExecute(
           {
             transaction: mintTx,
-            options: {
-              showEffects: true,
-              showBalanceChanges: true,
-              showObjectChanges: true,
-            },
           },
           {
             onSuccess: async (result) => {

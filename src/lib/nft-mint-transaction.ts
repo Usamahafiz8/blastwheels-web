@@ -47,13 +47,33 @@ export async function buildMintOnlyTransaction(
     suiClient.getObject({ id: transferPolicyId, options: { showOwner: true } }),
   ]);
 
-  const isCollectionShared = collectionObj.data?.owner && 'Shared' in collectionObj.data.owner;
-  const isPolicyShared = policyObj.data?.owner && 'Shared' in policyObj.data.owner;
+  // Check if objects are shared - handle ObjectOwner type (can be string or object)
+  const checkIsShared = (owner: any): boolean => {
+    if (!owner) return false;
+    if (typeof owner === 'string') return false;
+    const ownerObj = owner as Record<string, unknown>;
+    return ownerObj !== null && 'Shared' in ownerObj;
+  };
+
+  // Extract initial shared version from owner data
+  const getInitialSharedVersion = (owner: any): string | number | null => {
+    if (!owner || typeof owner === 'string') return null;
+    const ownerObj = owner as Record<string, any>;
+    if (ownerObj.Shared && typeof ownerObj.Shared === 'object' && ownerObj.Shared.initial_shared_version) {
+      return ownerObj.Shared.initial_shared_version;
+    }
+    return null;
+  };
+
+  const isCollectionShared = checkIsShared(collectionObj.data?.owner);
+  const isPolicyShared = checkIsShared(policyObj.data?.owner);
+  const collectionSharedVersion = getInitialSharedVersion(collectionObj.data?.owner);
+  const policySharedVersion = getInitialSharedVersion(policyObj.data?.owner);
 
   console.log('🔧 Collection is shared:', isCollectionShared);
   console.log('🔧 Transfer Policy is shared:', isPolicyShared);
 
-  if (!isCollectionShared) {
+  if (!isCollectionShared || !collectionSharedVersion) {
     const errorMessage = 
       `Collection is not shared. ` +
       `To enable user wallet minting, collections must be shared objects on the Sui blockchain. ` +
@@ -64,6 +84,21 @@ export async function buildMintOnlyTransaction(
     console.error('❌ Collection sharing error:', errorMessage);
     throw new Error(errorMessage);
   }
+
+  if (!isPolicyShared || !policySharedVersion) {
+    const errorMessage = 
+      `Transfer policy is not shared. ` +
+      `To enable user wallet minting, transfer policies must be shared objects on the Sui blockchain. ` +
+      `Transfer Policy ID: ${transferPolicyId} (Car Type: ${carType})`;
+    
+    console.error('❌ Transfer policy sharing error:', errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  // At this point, we know both are shared and have versions
+  // TypeScript needs explicit non-null assertions
+  const collectionVersion = collectionSharedVersion as string | number;
+  const policyVersion = policySharedVersion as string | number;
 
   // Create transaction
   const tx = new Transaction();
@@ -77,10 +112,18 @@ export async function buildMintOnlyTransaction(
   // 5. Returns KioskOwnerCap
   const kioskCap = tx.moveCall({
     target: `${NFT_PACKAGE_ID}::${NFT_MODULE}::mint`,
-    typeArguments: [typeArgument],
-    arguments: [
-      isCollectionShared ? tx.sharedObject(collectionId) : tx.object(collectionId),  // collection: &mut Collection<T>
-      isPolicyShared ? tx.sharedObject(transferPolicyId) : tx.object(transferPolicyId),  // policy: &mut TransferPolicy<NFT<T>>
+      typeArguments: [typeArgument],
+      arguments: [
+        tx.sharedObjectRef({
+          objectId: collectionId,
+          mutable: true,
+          initialSharedVersion: collectionVersion,
+        }),  // collection: &mut Collection<T>
+        tx.sharedObjectRef({
+          objectId: transferPolicyId,
+          mutable: true,
+          initialSharedVersion: policyVersion,
+        }),  // policy: &mut TransferPolicy<NFT<T>>
       tx.pure.string(params.carName),     // name: String
       tx.pure.string(params.imageUrl),    // image_url: String
       tx.pure.string(params.projectUrl),  // project_url: String

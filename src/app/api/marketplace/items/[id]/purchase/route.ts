@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { verifyPurchaseTransaction } from '@/lib/treasury';
-import { mintNFTOnChain, mintMultipleNFTs } from '@/lib/nft-mint-service';
-import { suiClient, SUI_CONFIG } from '@/lib/sui';
+import { mintNFTOnChain } from '@/lib/nft-mint-service';
 import { verifyPurchaseAndMintTransaction } from '@/lib/nft-purchase-transaction';
 import { verifyMintTransaction } from '@/lib/nft-mint-transaction';
 

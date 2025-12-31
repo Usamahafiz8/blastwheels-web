@@ -180,8 +180,8 @@ export async function verifyPurchaseAndMintTransaction(
     );
 
     // Treasury should receive tokens (positive amount)
-    const paymentVerified = treasuryBalanceChange && 
-      BigInt(Math.abs(Number(treasuryBalanceChange.amount || '0'))) >= expectedPaymentAmount;
+    const paymentVerified: boolean = !!(treasuryBalanceChange && 
+      BigInt(Math.abs(Number(treasuryBalanceChange.amount || '0'))) >= expectedPaymentAmount);
 
     // Verify mint: Check object changes for NFT creation
     const objectChanges = tx.objectChanges || [];
@@ -198,7 +198,11 @@ export async function verifyPurchaseAndMintTransaction(
     const sharedKiosk = objectChanges.find(
       (change: any) => {
         const isKiosk = change.objectType?.includes('kiosk::Kiosk');
-        const isShared = change.owner && 'Shared' in change.owner;
+        if (!change.owner) return false;
+        // Handle ObjectOwner type (can be string or object)
+        if (typeof change.owner === 'string') return false;
+        const ownerObj = change.owner as Record<string, unknown>;
+        const isShared = ownerObj !== null && 'Shared' in ownerObj;
         return isKiosk && isShared;
       }
     ) as { type: string; objectId: string } | undefined;
@@ -208,9 +212,9 @@ export async function verifyPurchaseAndMintTransaction(
       (change: any) => change.type === 'created' && change.objectType?.includes('kiosk::KioskOwnerCap')
     ) as { type: 'created'; objectId: string } | undefined;
 
-    const mintVerified = !!createdNFT && !!createdKioskCap;
+    const mintVerified: boolean = !!createdNFT && !!createdKioskCap;
 
-    const isValid = paymentVerified && mintVerified;
+    const isValid: boolean = !!(paymentVerified && mintVerified);
 
     return {
       isValid,
