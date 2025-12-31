@@ -37,12 +37,12 @@ export function withCors<T>(
   return async (req: NextRequest): Promise<NextResponse<T>> => {
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
-      return handleCorsPreflight();
+      return handleCorsPreflight() as NextResponse<T>;
     }
 
     // Execute the handler and add CORS headers
     const response = await handler(req);
-    return addCorsHeaders(response);
+    return addCorsHeaders(response) as NextResponse<T>;
   };
 }
 

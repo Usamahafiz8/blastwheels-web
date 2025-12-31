@@ -9,10 +9,10 @@ const globalForPrisma = globalThis as unknown as {
 let prismaInstance = globalForPrisma.prisma;
 
 if (process.env.NODE_ENV === 'development' && prismaInstance) {
-  // Runtime check: verify marketplaceItem model exists in cached instance
+  // Runtime check: verify new models exist in cached instance
   try {
     // @ts-ignore - Runtime check for new models that may not be in TypeScript types yet
-    if (!prismaInstance.marketplaceItem) {
+    if (!prismaInstance.marketplaceItem || !prismaInstance.leaderboardEntry) {
       // Old Prisma client missing new models, create fresh one
       console.log('🔄 Creating fresh Prisma client with new models...');
       prismaInstance.$disconnect().catch(() => {});
