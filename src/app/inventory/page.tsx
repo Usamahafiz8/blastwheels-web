@@ -202,7 +202,7 @@ export default function InventoryPage() {
               📦 My Inventory
             </h1>
             <p className="text-sm sm:text-base text-white/60 max-w-2xl mx-auto">
-              View all your assets, purchases, and transaction history
+              View your collected cards, purchases, and transaction history
             </p>
           </div>
 
@@ -340,8 +340,8 @@ export default function InventoryPage() {
               {activeTab === 'nfts' && (
                 <div>
                   <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-white mb-2">Your NFT Collection</h2>
-                    <p className="text-white/60">Total: {nfts.length} NFTs</p>
+                    <h2 className="text-2xl font-bold text-white mb-2">Your Collected Cards</h2>
+                    <p className="text-white/60">Total: {nfts.length} items in your collection</p>
                   </div>
                   {nfts.length === 0 ? (
                     <div className="text-center py-12 glass border border-orange-500/30 rounded-xl">

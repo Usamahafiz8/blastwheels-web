@@ -173,7 +173,7 @@ export default function MarketplacePage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 sm:mb-12">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-              🛒 Marketplace
+              Marketplace
             </h1>
             <p className="text-sm sm:text-base text-white/60 max-w-2xl mx-auto">
               Purchase items with your blastwheelz currency

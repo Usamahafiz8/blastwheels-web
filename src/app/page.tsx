@@ -1,9 +1,22 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 import Toast from '@/components/Toast';
 import { NFT_CARS } from '@/lib/nft-cars';
+import { SUI_CONFIG } from '@/lib/sui';
+
+// WHEELS token address for charts - exact token type string
+const WHEELS_TOKEN_ADDRESS = '0x6a9c2ded791f1eea4c23ac9bc3dbebf3e5b9f828a9837c9dd62d5e5698aac3ee::wheels::WHEELS';
+const WHEELS_PACKAGE_ID = '0x6a9c2ded791f1eea4c23ac9bc3dbebf3e5b9f828a9837c9dd62d5e5698aac3ee';
+
+// DexScreener pair address (this is the actual trading pair address, not the token address)
+const DEXSCREENER_PAIR_ADDRESS = '0x80fb27ef521bf319a4218953538b251e65934eab55d160149aae77a58ca4e1b6';
+
+// DexScreener URLs - Use the pair address
+const DEXSCREENER_URL = `https://dexscreener.com/sui/${DEXSCREENER_PAIR_ADDRESS}?embed=1&theme=dark&trades=0&info=0`;
+const DEXSCREENER_LINK = `https://dexscreener.com/sui/${DEXSCREENER_PAIR_ADDRESS}`;
 
 // Deterministic random function based on seed (index)
 function seededRandom(seed: number) {
@@ -17,6 +30,7 @@ function roundToFixed(num: number, decimals: number = 5): number {
 }
 
 export default function Home() {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState<{ [key: string]: boolean }>({
     chart: false,
     partnerships: false,
@@ -30,26 +44,72 @@ export default function Home() {
   const [toast, setToast] = useState({ message: '', isVisible: false, type: 'success' as 'success' | 'error' });
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  // Handle hash navigation when pathname changes (e.g., navigating from another page)
   useEffect(() => {
+    const handleHashNavigation = () => {
+      if (window.location.hash) {
+        const hash = window.location.hash.substring(1); // Remove #
+        // Wait for page to fully render
+        setTimeout(() => {
+          const element = document.getElementById(hash);
+          if (element) {
+            const headerOffset = 80; // Account for fixed header
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({
+              top: Math.max(0, offsetPosition),
+              behavior: 'smooth'
+            });
+          }
+        }, 500);
+      }
+    };
+
+    handleHashNavigation();
+  }, [pathname]);
+
+  useEffect(() => {
+
+    // Use requestAnimationFrame for better scroll performance
+    let rafId: number;
+    
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible((prev) => ({
-              ...prev,
-              [entry.target.id]: true,
-            }));
-          }
+        rafId = requestAnimationFrame(() => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setIsVisible((prev) => {
+                // Only update if value actually changed
+                if (prev[entry.target.id as keyof typeof prev]) {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  [entry.target.id]: true,
+                };
+              });
+            }
+          });
         });
       },
-      { threshold: 0.1 }
+      { 
+        threshold: 0.1,
+        rootMargin: '50px' // Start loading slightly before visible
+      }
     );
 
-    Object.values(sectionRefs.current).forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
+    // Delay observer setup slightly to avoid blocking initial render
+    const timeoutId = setTimeout(() => {
+      Object.values(sectionRefs.current).forEach((ref) => {
+        if (ref) observer.observe(ref);
+      });
+    }, 100);
 
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timeoutId);
+      if (rafId) cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
   }, []);
 
   const setRef = (id: string) => (el: HTMLDivElement | null) => {
@@ -64,17 +124,16 @@ export default function Home() {
         type={toast.type}
         onClose={() => setToast({ ...toast, isVisible: false })}
       />
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black relative overflow-hidden" style={{ willChange: 'scroll-position' }}>
       {/* Enhanced Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Larger, more vibrant gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-orange-500/20 via-orange-600/15 to-orange-500/20 rounded-full blur-3xl animate-pulse-glow scale-pulse"></div>
-        <div className="absolute top-3/4 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-orange-600/20 via-orange-500/15 to-orange-600/20 rounded-full blur-3xl animate-pulse-glow scale-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 left-1/2 w-[500px] h-[500px] bg-gradient-to-r from-orange-500/20 via-orange-600/15 to-orange-500/20 rounded-full blur-3xl animate-pulse-glow scale-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-1/2 right-1/3 w-[400px] h-[400px] bg-gradient-to-r from-orange-400/15 via-orange-500/10 to-orange-400/15 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1.5s' }}></div>
+        {/* Optimized gradient orbs with will-change for better performance */}
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-orange-500/20 via-orange-600/15 to-orange-500/20 rounded-full blur-3xl animate-pulse-glow scale-pulse" style={{ willChange: 'opacity, transform' }}></div>
+        <div className="absolute top-3/4 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-orange-600/20 via-orange-500/15 to-orange-600/20 rounded-full blur-3xl animate-pulse-glow scale-pulse" style={{ animationDelay: '1s', willChange: 'opacity, transform' }}></div>
+        <div className="absolute bottom-1/4 left-1/2 w-[500px] h-[500px] bg-gradient-to-r from-orange-500/20 via-orange-600/15 to-orange-500/20 rounded-full blur-3xl animate-pulse-glow scale-pulse" style={{ animationDelay: '2s', willChange: 'opacity, transform' }}></div>
         
-        {/* More animated stars with varying sizes */}
-        {Array.from({ length: 80 }).map((_, i) => {
+        {/* Reduced animated stars for better performance */}
+        {Array.from({ length: 40 }).map((_, i) => {
           const seed = i * 0.1;
           return (
             <div
@@ -87,6 +146,7 @@ export default function Home() {
                 height: `${roundToFixed(seededRandom(seed + 3) * 3 + 1, 5)}px`,
                 animationDelay: `${roundToFixed(seededRandom(seed + 4) * 3, 6)}s`,
                 animationDuration: `${roundToFixed(2 + seededRandom(seed + 5) * 3, 6)}s`,
+                willChange: 'opacity',
               }}
             />
           );
@@ -107,8 +167,8 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Floating particles */}
-        {Array.from({ length: 20 }).map((_, i) => {
+        {/* Reduced floating particles for better performance */}
+        {Array.from({ length: 10 }).map((_, i) => {
           const seed = i * 0.2;
           return (
             <div
@@ -119,6 +179,7 @@ export default function Home() {
                 top: `${roundToFixed(100 + seededRandom(seed + 1) * 20, 4)}%`,
                 animationDelay: `${roundToFixed(seededRandom(seed + 2) * 5, 6)}s`,
                 animationDuration: `${roundToFixed(15 + seededRandom(seed + 3) * 10, 6)}s`,
+                willChange: 'transform, opacity',
               }}
             />
           );
@@ -180,7 +241,7 @@ export default function Home() {
               href="/marketplace"
               className="group relative px-6 py-2.5 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 border border-orange-500/30 text-sm sm:text-base"
             >
-              <span className="relative z-10">🛒 NFT Marketplace</span>
+              <span className="relative z-10">NFT Marketplace</span>
             </Link>
           </div>
         </div>
@@ -235,13 +296,14 @@ export default function Home() {
       <section 
         id="features" 
         ref={setRef('features')}
-        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
-          isVisible.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-opacity duration-300 ${
+          isVisible.features ? 'opacity-100' : 'opacity-0'
         }`}
+        style={{ scrollMarginTop: '80px' }}
       >
         <div className="text-center max-w-6xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 sm:mb-3 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-            🎮 Game Features
+             Game Features
           </h2>
           <p className="text-xs sm:text-sm text-white/60 mb-4 sm:mb-6 max-w-2xl mx-auto px-2">
             Blockchain-powered racing with real rewards
@@ -262,7 +324,7 @@ export default function Home() {
             {/* NFT Cars */}
             <div className="glass border-2 border-orange-500/30 rounded-lg p-2 sm:p-3 md:p-4 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-2 sm:mb-3 mx-auto group-hover:scale-110 transition-transform">
-                <span className="text-xl sm:text-2xl">🚗</span>
+                
               </div>
               <h3 className="text-xs sm:text-sm font-bold text-white mb-1 sm:mb-2 text-center">NFT Cars</h3>
               <p className="text-[10px] sm:text-xs text-white/70 text-center leading-tight px-1">
@@ -284,7 +346,7 @@ export default function Home() {
             {/* NFT Marketplace */}
             <div className="glass border-2 border-orange-500/30 rounded-lg p-2 sm:p-3 md:p-4 hover-3d transition-all duration-300 group hover:border-orange-500/60 hover:shadow-lg hover:shadow-orange-500/20">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-2 sm:mb-3 mx-auto group-hover:scale-110 transition-transform">
-                <span className="text-xl sm:text-2xl">🛒</span>
+               
               </div>
               <h3 className="text-xs sm:text-sm font-bold text-white mb-1 sm:mb-2 text-center">Marketplace</h3>
               <p className="text-[10px] sm:text-xs text-white/70 text-center leading-tight px-1">
@@ -325,19 +387,48 @@ export default function Home() {
           isVisible.chart ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}
       >
-        <div className="text-center">
+        <div className="text-center max-w-7xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-3 sm:mb-4 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-            📊 Chart
+            $WHEELS Chart
           </h2>
-          <div className="glass border border-orange-500/20 rounded-lg p-6 sm:p-8 min-h-[150px] sm:min-h-[200px] flex items-center justify-center hover-3d transition-all duration-300">
-            <div className="text-center">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center animate-pulse-glow">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <p className="text-white/60 text-xs sm:text-sm">Chart integration coming soon...</p>
+          <p className="text-xs sm:text-sm text-white/60 mb-4 sm:mb-6 max-w-2xl mx-auto px-2">
+            Real-time price chart and trading data
+          </p>
+
+          {/* Chart Container */}
+          <div className="glass border border-orange-500/20 rounded-lg overflow-hidden hover-3d transition-all duration-300">
+            <div className="w-full" style={{ height: '600px' }}>
+              {isVisible.chart && (
+                <iframe
+                  key="dexscreener-chart"
+                  src={DEXSCREENER_URL}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                  }}
+                  title="DexScreener Chart"
+                  allow="clipboard-write"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              )}
             </div>
+          </div>
+
+          {/* External Link */}
+          <div className="mt-4 flex justify-center">
+            <a
+              href={DEXSCREENER_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-orange-500/30 hover:border-orange-500/50 text-white rounded-lg transition-all duration-300 text-sm font-semibold"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              View on DexScreener
+            </a>
           </div>
         </div>
       </section>
@@ -346,13 +437,13 @@ export default function Home() {
       <section 
         id="marketplace" 
         ref={setRef('marketplace')}
-        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
-          isVisible.marketplace ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-opacity duration-300 ${
+          isVisible.marketplace ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div className="text-center max-w-5xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 sm:mb-3 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-            🛒 NFT Marketplace
+             NFT Marketplace
           </h2>
           <p className="text-xs sm:text-sm text-white/60 mb-4 sm:mb-6 max-w-2xl mx-auto px-2">
             Secure on-chain buying, selling & trading
@@ -397,13 +488,13 @@ export default function Home() {
       <section 
         id="nfts" 
         ref={setRef('nfts')}
-        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
-          isVisible.nfts ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-opacity duration-300 ${
+          isVisible.nfts ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div className="text-center max-w-7xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 sm:mb-3 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-            🚗 NFT Collection
+            NFT Collection
           </h2>
           <p className="text-xs sm:text-sm text-white/60 mb-4 sm:mb-6 max-w-2xl mx-auto px-2">
             Limited edition NFT cars ready for the track
@@ -442,8 +533,8 @@ export default function Home() {
       <section 
         id="partnerships" 
         ref={setRef('partnerships')}
-        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
-          isVisible.partnerships ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-opacity duration-300 ${
+          isVisible.partnerships ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div className="text-center">
@@ -469,8 +560,8 @@ export default function Home() {
       <section 
         id="join" 
         ref={setRef('join')}
-        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
-          isVisible.join ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-opacity duration-300 ${
+          isVisible.join ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div className="text-center max-w-5xl mx-auto">
@@ -539,13 +630,13 @@ export default function Home() {
       <section 
         id="roadmap" 
         ref={setRef('roadmap')}
-        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-all duration-1000 ${
-          isVisible.roadmap ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        className={`relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 border-t border-orange-500/20 transition-opacity duration-300 ${
+          isVisible.roadmap ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div className="text-center max-w-5xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 sm:mb-6 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-            🗺️ Roadmap
+            Roadmap
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">

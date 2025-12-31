@@ -24,6 +24,18 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Performance optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optimize rendering for sections */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
@@ -125,12 +137,14 @@ html {
   animation: fade-in 1s ease-out forwards;
 }
 
-/* Glass morphism effect */
+/* Glass morphism effect - optimized for performance */
 .glass {
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  will-change: transform;
+  transform: translateZ(0); /* Force GPU acceleration */
 }
 
 /* Shimmer effect */

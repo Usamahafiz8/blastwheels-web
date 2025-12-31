@@ -154,7 +154,7 @@ All API routes are available at `/api/*`
 - `GET /api/sui/balance` - Get WHEELS token balance
 - `GET /api/sui/transactions` - Get transaction history
 
-## 🎮 Usage
+## Usage
 
 ### For Players
 1. Connect your Sui wallet

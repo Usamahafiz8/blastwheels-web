@@ -47,23 +47,50 @@ export default function Header() {
 
           {/* Desktop Navigation - Simplified */}
           <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            <a
-              href="#features"
+            <Link
+              href="/#features"
               className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
+              onClick={(e) => {
+                // Handle navigation and scroll
+                if (window.location.pathname === '/') {
+                  // Already on home page, just scroll
+                  e.preventDefault();
+                  setTimeout(() => {
+                    const element = document.getElementById('features');
+                    if (element) {
+                      const headerOffset = 80; // Account for fixed header
+                      const elementPosition = element.getBoundingClientRect().top;
+                      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                      });
+                    }
+                  }, 100);
+                } else {
+                  // Navigate to home page, then scroll after page loads
+                  setTimeout(() => {
+                    const element = document.getElementById('features');
+                    if (element) {
+                      const headerOffset = 80;
+                      const elementPosition = element.getBoundingClientRect().top;
+                      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                      });
+                    }
+                  }, 500);
+                }
+              }}
             >
               Features
-            </a>
+            </Link>
             <Link
               href="/marketplace"
               className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
             >
               Marketplace
-            </Link>
-            <Link
-              href="/collection"
-              className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
-            >
-              Collection
             </Link>
             {user && (
               <Link
@@ -73,12 +100,12 @@ export default function Header() {
                 Inventory
               </Link>
             )}
-            <a
-              href="#join"
+            <Link
+              href="/#join"
               className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
             >
               Join Race
-            </a>
+            </Link>
             
             {/* Wallet Connect */}
             <div className="connect-button-wrapper ml-2">
@@ -185,26 +212,50 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-orange-500/20">
             <div className="flex flex-col space-y-3">
-              <a
-                href="#features"
+              <Link
+                href="/#features"
                 className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={(e) => {
+                  setIsMenuOpen(false);
+                  // Handle navigation and scroll
+                  if (window.location.pathname === '/') {
+                    e.preventDefault();
+                    setTimeout(() => {
+                      const element = document.getElementById('features');
+                      if (element) {
+                        const headerOffset = 80;
+                        const elementPosition = element.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                        window.scrollTo({
+                          top: offsetPosition,
+                          behavior: 'smooth'
+                        });
+                      }
+                    }, 100);
+                  } else {
+                    setTimeout(() => {
+                      const element = document.getElementById('features');
+                      if (element) {
+                        const headerOffset = 80;
+                        const elementPosition = element.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                        window.scrollTo({
+                          top: offsetPosition,
+                          behavior: 'smooth'
+                        });
+                      }
+                    }, 500);
+                  }
+                }}
               >
                 Features
-              </a>
+              </Link>
               <Link
                 href="/marketplace"
                 className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Marketplace
-              </Link>
-              <Link
-                href="/collection"
-                className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Collection
               </Link>
               {user && (
                 <Link
@@ -215,13 +266,13 @@ export default function Header() {
                   Inventory
                 </Link>
               )}
-              <a
-                href="#join"
+              <Link
+                href="/#join"
                 className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Join Race
-              </a>
+              </Link>
               {user ? (
                 <>
                   <Link

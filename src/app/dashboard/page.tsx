@@ -448,7 +448,7 @@ export default function DashboardPage() {
                   : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
-              📊 Dashboard
+              Dashboard
             </button>
             <button
               onClick={() => setActiveMainTab('inventory')}
