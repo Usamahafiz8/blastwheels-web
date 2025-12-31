@@ -161,7 +161,7 @@ export default function DashboardPage() {
         if (txDetails.data?.treasuryAddress) {
           // Build transaction
           const tx = new SuiTransaction();
-          const amountInSmallestUnit = BigInt(txDetails.data.amountInSmallestUnit);
+          const amountInSmallestUnit = BigInt(txDetails.data.amountInSmallestUnit || '0');
 
           // Get user's WHEELS coins (purchase token)
           const { suiClient: client } = await import('@/lib/sui');
