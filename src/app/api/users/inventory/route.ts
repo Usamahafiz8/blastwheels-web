@@ -388,53 +388,53 @@ export async function GET(req: NextRequest) {
       if (purchaseId && purchaseIds.includes(purchaseId)) {
         continue;
       }
-        // Find transaction for this NFT
-        const nftTransaction =
-          nftTxById.get(nft.id) ||
-          nftTxByTokenId.get(nft.tokenId) ||
-          nftTxBySuiObjectId.get(nft.suiObjectId);
 
-        inventoryItems.push({
-          id: nft.id,
-          type: 'NFT',
-          name: nft.name,
-          description: nft.description,
-          imageUrl: nft.imageUrl,
-          nftDetails: {
-            tokenId: nft.tokenId,
-            suiObjectId: nft.suiObjectId,
-            collectionId: nft.collectionId,
-            mintNumber: nft.mintNumber,
-            alloyRim: nft.alloyRim,
-            frontBonnet: nft.frontBonnet,
-            backBonnet: nft.backBonnet,
-            creator: nft.creator,
-            kioskId: nftMetadata?.kioskId,
-            kioskOwnerCapId: nftMetadata?.kioskOwnerCapId,
-            transactionDigest: nftMetadata?.transactionDigest,
-          },
-          purchaseInfo: nftTransaction
-            ? {
-                purchaseId: null,
-                purchasePrice: nftTransaction.amount.toString(),
-                purchaseDate: nftTransaction.createdAt,
-                quantity: 1,
-                itemName: (nftTransaction.metadata as any)?.nftName || nft.name,
-                itemCategory: null,
-              }
-            : null,
-          transactionInfo: nftTransaction
-            ? {
-                transactionHash: nftTransaction.suiTxHash,
-                transactionStatus: nftTransaction.status,
-                transactionDate: nftTransaction.createdAt,
-                paymentMethod: (nftTransaction.metadata as any)?.paymentMethod || 'crypto_wallet',
-              }
-            : null,
-          metadata: nftMetadata,
-          acquiredAt: nft.createdAt,
-        });
-      }
+      // Find transaction for this NFT
+      const nftTransaction =
+        nftTxById.get(nft.id) ||
+        nftTxByTokenId.get(nft.tokenId) ||
+        nftTxBySuiObjectId.get(nft.suiObjectId);
+
+      inventoryItems.push({
+        id: nft.id,
+        type: 'NFT',
+        name: nft.name,
+        description: nft.description,
+        imageUrl: nft.imageUrl,
+        nftDetails: {
+          tokenId: nft.tokenId,
+          suiObjectId: nft.suiObjectId,
+          collectionId: nft.collectionId,
+          mintNumber: nft.mintNumber,
+          alloyRim: nft.alloyRim,
+          frontBonnet: nft.frontBonnet,
+          backBonnet: nft.backBonnet,
+          creator: nft.creator,
+          kioskId: nftMetadata?.kioskId,
+          kioskOwnerCapId: nftMetadata?.kioskOwnerCapId,
+          transactionDigest: nftMetadata?.transactionDigest,
+        },
+        purchaseInfo: nftTransaction
+          ? {
+              purchaseId: null,
+              purchasePrice: nftTransaction.amount.toString(),
+              purchaseDate: nftTransaction.createdAt,
+              quantity: 1,
+              itemName: (nftTransaction.metadata as any)?.nftName || nft.name,
+              itemCategory: null,
+            }
+          : null,
+        transactionInfo: nftTransaction
+          ? {
+              transactionHash: nftTransaction.suiTxHash,
+              transactionStatus: nftTransaction.status,
+              transactionDate: nftTransaction.createdAt,
+              paymentMethod: (nftTransaction.metadata as any)?.paymentMethod || 'crypto_wallet',
+            }
+          : null,
+        metadata: nftMetadata,
+        acquiredAt: nft.createdAt,
+      });
     }
 
     // Apply type filter
