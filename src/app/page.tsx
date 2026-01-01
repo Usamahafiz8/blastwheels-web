@@ -232,7 +232,7 @@ export default function Home() {
           {/* CTA Buttons - Compact */}
           <div className="animate-fade-in flex flex-col sm:flex-row gap-3 justify-center items-center" style={{ animationDelay: '0.4s' }}>
             <Link
-              href="/race"
+              href="/game"
               className="group relative px-6 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-orange-500/50 text-sm sm:text-base"
             >
               <span className="relative z-10">🚀 Start Racing</span>

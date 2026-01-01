@@ -101,7 +101,7 @@ export default function Header() {
               </Link>
             )}
             <Link
-              href="/GameBuild"
+              href="/game"
               className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm"
             >
               Join Race
@@ -267,7 +267,7 @@ export default function Header() {
                 </Link>
               )}
               <Link
-                href="/GameBuild"
+                href="/game"
                 className="text-white/80 hover:text-orange-500 transition-colors font-medium text-sm py-2"
                 onClick={() => setIsMenuOpen(false)}
               >

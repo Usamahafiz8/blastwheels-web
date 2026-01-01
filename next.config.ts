@@ -2,6 +2,20 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async redirects() {
+    return [
+      {
+        source: '/GameBuild',
+        destination: '/game',
+        permanent: true,
+      },
+      {
+        source: '/race',
+        destination: '/game',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
