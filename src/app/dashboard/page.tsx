@@ -46,6 +46,7 @@ interface TransactionRecord {
   status: string;
   createdAt: string;
   metadata: any;
+  suiTxHash?: string | null;
 }
 
 export default function DashboardPage() {

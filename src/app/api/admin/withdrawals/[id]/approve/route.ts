@@ -256,6 +256,10 @@ export async function POST(
         });
       }
 
+      if (!updatedUser) {
+        throw new Error('User not found');
+      }
+
       // Update transaction to completed
       const updatedTransaction = await txDb.transaction.update({
         where: { id },

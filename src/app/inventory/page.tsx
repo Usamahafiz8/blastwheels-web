@@ -42,6 +42,7 @@ interface Transaction {
   status: string;
   createdAt: string;
   metadata: any;
+  suiTxHash?: string | null;
 }
 
 export default function InventoryPage() {
