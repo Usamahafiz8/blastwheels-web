@@ -156,54 +156,75 @@ export async function POST(
         }
         // If no mintTxHash, admin wallet will mint after purchase (see below)
       } else {
-        // Using wallet payment - verify transaction
-        if (!paymentTxHash) {
-          return NextResponse.json(
-            { error: 'Transaction hash is required for wallet-based NFT purchases' },
-            { status: 400 }
+        // Using wallet payment
+        // If paymentTxHash is provided, verify the transaction
+        // If not provided, admin wallet will handle minting (fallback to database balance flow)
+        if (paymentTxHash) {
+          // Check if transaction hash already exists
+          const existingTx = await prisma.transaction.findUnique({
+            where: { suiTxHash: paymentTxHash },
+          });
+
+          if (existingTx) {
+            return NextResponse.json(
+              { error: 'Transaction hash already processed' },
+              { status: 400 }
+            );
+          }
+
+          // Verify combined purchase and mint transaction
+          const metadata = (item.metadata as any) || {};
+          nftVerificationResult = await verifyPurchaseAndMintTransaction(
+            paymentTxHash,
+            totalPriceInSmallestUnit,
+            user.walletAddress,
+            item.name
           );
-        }
 
-        // Check if transaction hash already exists
-        const existingTx = await prisma.transaction.findUnique({
-          where: { suiTxHash: paymentTxHash },
-        });
+          if (!nftVerificationResult.isValid) {
+            return NextResponse.json(
+              { 
+                error: nftVerificationResult.error || 'Transaction verification failed',
+                details: {
+                  paymentVerified: nftVerificationResult.paymentVerified,
+                  mintVerified: nftVerificationResult.mintVerified,
+                }
+              },
+              { status: 400 }
+            );
+          }
 
-        if (existingTx) {
-          return NextResponse.json(
-            { error: 'Transaction hash already processed' },
-            { status: 400 }
-          );
-        }
-
-        // Verify combined purchase and mint transaction
-        const metadata = (item.metadata as any) || {};
-        nftVerificationResult = await verifyPurchaseAndMintTransaction(
-          paymentTxHash,
-          totalPriceInSmallestUnit,
-          user.walletAddress,
-          item.name
-        );
-
-        if (!nftVerificationResult.isValid) {
-          return NextResponse.json(
-            { 
-              error: nftVerificationResult.error || 'Transaction verification failed',
-              details: {
-                paymentVerified: nftVerificationResult.paymentVerified,
-                mintVerified: nftVerificationResult.mintVerified,
-              }
-            },
-            { status: 400 }
-          );
-        }
-
-        // Verify we got the NFT details
-        if (!nftVerificationResult.nftObjectId || !nftVerificationResult.kioskOwnerCapId) {
-          return NextResponse.json(
-            { error: 'NFT minting verification failed. NFT details not found in transaction.' },
-            { status: 400 }
-          );
+          // Verify we got the NFT details
+          if (!nftVerificationResult.nftObjectId || !nftVerificationResult.kioskOwnerCapId) {
+            return NextResponse.json(
+              { error: 'NFT minting verification failed. NFT details not found in transaction.' },
+              { status: 400 }
+            );
+          }
+        } else {
+          // No paymentTxHash provided - treat as database balance payment
+          // Check database balance
+          const userBalance = Number(userWithBalance?.blastwheelzBalance || 0);
+          if (userBalance < totalPrice) {
+            return NextResponse.json(
+              {
+                error: 'Insufficient balance',
+                required: totalPrice,
+                available: userBalance,
+              },
+              { status: 400 }
+            );
+          }
+          
+          // Verify user has wallet address for NFT transfer
+          if (!user.walletAddress) {
+            return NextResponse.json(
+              { error: 'Wallet address is required to receive NFTs. Please set your wallet address in your profile.' },
+              { status: 400 }
+            );
+          }
+          
+          // Will use database balance and admin wallet will mint (handled below)
         }
       }
     } else {
@@ -221,12 +242,15 @@ export async function POST(
       }
     }
 
+    // Determine actual payment method (needed for transaction processing)
+    const actuallyUsingDatabaseBalance = item.type !== 'NFT' || useDatabaseBalance || (item.type === 'NFT' && !paymentTxHash);
+
     // Process purchase in transaction with increased timeout (30 seconds)
     // The transaction includes multiple database operations that may take time
     const result = await prisma.$transaction(async (tx) => {
       // Deduct from database balance for non-NFT items or NFT items using database balance
       let updatedUser;
-      if (item.type !== 'NFT' || useDatabaseBalance) {
+      if (actuallyUsingDatabaseBalance) {
         updatedUser = await tx.user.update({
           where: { id: user.id },
           data: {
@@ -239,7 +263,7 @@ export async function POST(
           },
         });
       } else {
-        // For NFT items with wallet payment, balance is already deducted from crypto wallet
+        // For NFT items with wallet payment (paymentTxHash provided), balance is already deducted from crypto wallet
         updatedUser = await tx.user.findUnique({
           where: { id: user.id },
           select: {
@@ -294,7 +318,7 @@ export async function POST(
             purchaseId: purchase.id,
             quantity,
             paymentMethod: item.type === 'NFT' 
-              ? (useDatabaseBalance ? 'database_balance' : 'crypto_wallet')
+              ? (actuallyUsingDatabaseBalance ? 'database_balance' : 'crypto_wallet')
               : 'database_balance',
           },
         },
@@ -308,8 +332,9 @@ export async function POST(
 
     // For NFT items, save NFT from user's mint transaction, admin wallet mint, or verify wallet payment transaction
     if (item.type === 'NFT') {
+      
       // Case 1: User minted NFT themselves (useDatabaseBalance = true with mintTxHash)
-      if (useDatabaseBalance && nftVerificationResult && nftVerificationResult.nftObjectId) {
+      if (actuallyUsingDatabaseBalance && nftVerificationResult && nftVerificationResult.nftObjectId) {
         // NFT was already minted by user's wallet transaction, just save it
         try {
           console.log(`💾 Saving NFT to database from user's mint transaction ${mintTxHash}...`);
@@ -408,8 +433,8 @@ export async function POST(
           throw new Error(`Failed to save NFT: ${saveError.message}`);
         }
       } 
-      // Case 2: Admin wallet mints NFT (useDatabaseBalance = true without mintTxHash)
-      else if (useDatabaseBalance && !mintTxHash) {
+      // Case 2: Admin wallet mints NFT (useDatabaseBalance = true without mintTxHash, OR no paymentTxHash provided)
+      else if (actuallyUsingDatabaseBalance && !mintTxHash) {
         try {
           console.log(`🎨 Admin wallet minting NFT on-chain for purchase ${result.purchase.id}...`);
           console.log(`💰 Admin wallet will pay for gas and minting costs`);
