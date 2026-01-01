@@ -57,7 +57,6 @@ export default function DashboardPage() {
   const [wheelsBalance, setWheelsBalance] = useState<string>('0');
   const [blastwheelzBalance, setBlastwheelzBalance] = useState<string>('0');
   const [blastweelTokenBalance, setBlastweelTokenBalance] = useState<string>('0');
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseAmount, setPurchaseAmount] = useState('');
@@ -71,11 +70,12 @@ export default function DashboardPage() {
   
   // Inventory state
   const [activeMainTab, setActiveMainTab] = useState<'dashboard' | 'inventory'>('dashboard');
-  const [activeInventoryTab, setActiveInventoryTab] = useState<'overview' | 'nfts' | 'purchases' | 'transactions'>('overview');
+  const [activeInventoryTab, setActiveInventoryTab] = useState<'overview' | 'nfts' | 'purchases' | 'transactions' | 'withdrawals'>('overview');
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [purchases, setPurchases] = useState<MarketplacePurchase[]>([]);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [pendingWithdrawal, setPendingWithdrawal] = useState<TransactionRecord | null>(null);
   const [toast, setToast] = useState({ message: '', isVisible: false, type: 'success' as 'success' | 'error' });
 
   const walletMismatch =
@@ -102,13 +102,13 @@ export default function DashboardPage() {
       // Use the connected wallet address if available, otherwise use the one from user
       const walletAddress = account?.address || user?.walletAddress;
       
-      const [statsRes, nativeSuiRes, wheelsRes, blastwheelzRes, tokenBalanceRes, leaderboardRes] = await Promise.all([
+      const [statsRes, nativeSuiRes, wheelsRes, blastwheelzRes, tokenBalanceRes, pendingWithdrawalRes] = await Promise.all([
         apiClient.getStats(),
         apiClient.getNativeSuiBalance(walletAddress),
         apiClient.getWheelsBalance(walletAddress),
         apiClient.getBlastwheelzBalance(),
         apiClient.getBlastweelTokenBalance(walletAddress),
-        apiClient.getLeaderboard(10),
+        apiClient.getPendingWithdrawal(),
       ]);
 
       if (statsRes.data) setStats(statsRes.data.stats);
@@ -124,7 +124,16 @@ export default function DashboardPage() {
       }
       if (blastwheelzRes.data) setBlastwheelzBalance(blastwheelzRes.data.balance);
       if (tokenBalanceRes.data) setBlastweelTokenBalance(tokenBalanceRes.data.balance);
-      if (leaderboardRes.data) setLeaderboard(leaderboardRes.data.leaderboard);
+      
+      // Check for pending withdrawal
+      if (pendingWithdrawalRes.data?.withdrawal) {
+        setPendingWithdrawal({
+          ...pendingWithdrawalRes.data.withdrawal,
+          amount: pendingWithdrawalRes.data.withdrawal.amount.toString(),
+        });
+      } else {
+        setPendingWithdrawal(null);
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -310,20 +319,16 @@ export default function DashboardPage() {
       });
 
       if (response.error) {
-        alert(`Withdrawal failed: ${response.error}`);
+        alert(`Withdrawal request failed: ${response.error}`);
       } else {
-        alert('Withdrawal successful!');
+        alert('Withdrawal request submitted! Waiting for admin approval. You can check the status in your transaction history.');
         setShowWithdrawModal(false);
         setWithdrawAmount('');
         setWithdrawTxHash('');
-        // Reload balances
-        if (account) {
-          const [blastwheelzRes, tokenBalanceRes] = await Promise.all([
-            apiClient.getBlastwheelzBalance(),
-            apiClient.getBlastweelTokenBalance(account.address),
-          ]);
-          if (blastwheelzRes.data) setBlastwheelzBalance(blastwheelzRes.data.balance);
-          if (tokenBalanceRes.data) setBlastweelTokenBalance(tokenBalanceRes.data.balance);
+        // Reload data to show the new pending request
+        await loadData();
+        if (activeMainTab === 'inventory' && activeInventoryTab === 'transactions') {
+          loadInventoryData();
         }
       }
     } catch (error) {
@@ -409,6 +414,17 @@ export default function DashboardPage() {
           })));
         }
       }
+      
+      // Load withdrawals (only if on withdrawals tab)
+      if (activeInventoryTab === 'withdrawals') {
+        const txRes = await apiClient.getCurrencyHistory(100, 0, 'withdrawal');
+        if (txRes.data?.transactions) {
+          setTransactions(txRes.data.transactions.map((tx: any) => ({
+            ...tx,
+            amount: tx.amount.toString(),
+          })));
+        }
+      }
     } catch (error: any) {
       console.error('Failed to load inventory data:', error);
       setToast({
@@ -478,6 +494,48 @@ export default function DashboardPage() {
         {/* Dashboard Tab Content */}
         {activeMainTab === 'dashboard' && (
           <div>
+            {/* Pending Withdrawal Request Banner */}
+            {pendingWithdrawal && (
+              <div className="mb-6 glass border-2 border-yellow-500/50 rounded-xl p-6 bg-gradient-to-r from-yellow-500/10 to-orange-500/10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                        <span className="text-2xl">⏳</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Withdrawal Request in Process</h3>
+                        <p className="text-white/60 text-sm">Your withdrawal request is waiting for admin approval</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                        <p className="text-white/60 text-xs mb-1">Amount</p>
+                        <p className="text-orange-400 font-bold text-lg">
+                          {Number(pendingWithdrawal.amount).toFixed(2)} blastwheelz
+                        </p>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                        <p className="text-white/60 text-xs mb-1">Status</p>
+                        <p className="text-yellow-400 font-semibold">PENDING APPROVAL</p>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                        <p className="text-white/60 text-xs mb-1">Requested</p>
+                        <p className="text-white/80 text-sm">
+                          {new Date(pendingWithdrawal.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                      <p className="text-yellow-300 text-sm">
+                        💡 <strong>Note:</strong> You can only have one pending withdrawal request at a time. 
+                        Once approved, the WHEELS tokens will be sent to your wallet.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
         {/* Top cards: Account Overview + Your Performance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
@@ -583,10 +641,11 @@ export default function DashboardPage() {
                 </button>
                 <button
                   onClick={() => setShowWithdrawModal(true)}
-                  disabled={parseFloat(blastwheelzBalance) <= 0 || walletMismatch}
+                  disabled={parseFloat(blastwheelzBalance) <= 0 || walletMismatch || !!pendingWithdrawal}
                   className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2.5 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={pendingWithdrawal ? 'You already have a pending withdrawal request' : ''}
                 >
-                  Withdraw
+                  {pendingWithdrawal ? 'Withdrawal Pending' : 'Withdraw'}
                 </button>
               </div>
             </div>
@@ -645,40 +704,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Leaderboard */}
-        <div className="glass border border-orange-500/30 rounded-2xl p-6">
-          <h2 className="text-2xl font-bold text-white mb-4">Top Players</h2>
-          <div className="space-y-3">
-            {leaderboard.length > 0 ? (
-              leaderboard.map((entry, index) => (
-                <div
-                  key={entry.user.id}
-                  className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="text-white font-semibold">{entry.user.username}</p>
-                      <p className="text-white/60 text-sm">
-                        {entry.totalGames} games • {entry.wins} wins
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-orange-500 font-bold">
-                      {parseFloat(entry.totalEarnings).toFixed(2)} WHEELS
-                    </p>
-                    <p className="text-white/40 text-sm">Rank #{entry.rank}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-white/60 text-center py-8">No leaderboard data available</p>
-            )}
-          </div>
-        </div>
           </div>
         )}
 
@@ -687,17 +712,22 @@ export default function DashboardPage() {
           <div className="w-full">
             {/* Inventory Sub-tabs */}
             <div className="flex flex-wrap gap-2 mb-6 border-b border-orange-500/20 pb-4">
-              {(['overview', 'nfts', 'purchases', 'transactions'] as const).map((tab) => (
+              {(['overview', 'nfts', 'purchases', 'transactions', 'withdrawals'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveInventoryTab(tab)}
-                  className={`px-6 py-2.5 font-semibold transition-all duration-300 rounded-lg ${
+                  className={`px-6 py-2.5 font-semibold transition-all duration-300 rounded-lg relative ${
                     activeInventoryTab === tab
                       ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
                       : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab === 'withdrawals' && pendingWithdrawal && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-xs font-bold text-black">
+                      !
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -1008,17 +1038,41 @@ export default function DashboardPage() {
                                     {Number(tx.amount).toFixed(2)} blastwheelz
                                   </td>
                                   <td className="px-6 py-4">
-                                    <span
-                                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                                        tx.status === 'COMPLETED'
-                                          ? 'bg-green-500/20 text-green-400'
-                                          : tx.status === 'PENDING'
-                                          ? 'bg-yellow-500/20 text-yellow-400'
-                                          : 'bg-red-500/20 text-red-400'
-                                      }`}
-                                    >
-                                      {tx.status}
-                                    </span>
+                                    <div className="flex flex-col gap-1">
+                                      <span
+                                        className={`px-2 py-1 rounded text-xs font-semibold ${
+                                          tx.status === 'COMPLETED'
+                                            ? 'bg-green-500/20 text-green-400'
+                                            : tx.status === 'PENDING'
+                                            ? 'bg-yellow-500/20 text-yellow-400'
+                                            : 'bg-red-500/20 text-red-400'
+                                        }`}
+                                      >
+                                        {tx.status === 'PENDING' && tx.type === 'WITHDRAWAL' 
+                                          ? 'PENDING APPROVAL' 
+                                          : tx.status === 'COMPLETED' && tx.type === 'WITHDRAWAL'
+                                          ? 'APPROVED'
+                                          : tx.status === 'FAILED' && tx.type === 'WITHDRAWAL'
+                                          ? 'REJECTED'
+                                          : tx.status}
+                                      </span>
+                                      {tx.status === 'PENDING' && tx.type === 'WITHDRAWAL' && (
+                                        <span className="text-yellow-400/60 text-xs">⏳ Waiting for admin approval</span>
+                                      )}
+                                      {tx.status === 'FAILED' && tx.type === 'WITHDRAWAL' && tx.metadata && (tx.metadata as any).rejectionReason && (
+                                        <span className="text-red-400/60 text-xs">❌ Reason: {(tx.metadata as any).rejectionReason}</span>
+                                      )}
+                                      {tx.status === 'COMPLETED' && tx.type === 'WITHDRAWAL' && tx.suiTxHash && (
+                                        <a
+                                          href={`https://suiexplorer.com/txblock/${tx.suiTxHash}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-400/80 text-xs hover:text-blue-400 underline"
+                                        >
+                                          🔗 View Transaction
+                                        </a>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="px-6 py-4 text-white/60 text-sm">
                                     {new Date(tx.createdAt).toLocaleString()}
@@ -1028,6 +1082,120 @@ export default function DashboardPage() {
                             </tbody>
                           </table>
                         </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Withdrawals Tab */}
+                {activeInventoryTab === 'withdrawals' && (
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-2xl font-bold text-white mb-2">My Withdrawal Requests</h2>
+                      <p className="text-white/60">View all your withdrawal requests and their status</p>
+                    </div>
+                    
+                    {pendingWithdrawal && (
+                      <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">⏳</span>
+                          <div className="flex-1">
+                            <h3 className="text-yellow-400 font-semibold mb-1">Pending Withdrawal Request</h3>
+                            <p className="text-white/80 text-sm mb-2">
+                              Amount: <span className="font-semibold text-yellow-400">{Number(pendingWithdrawal.amount).toFixed(2)} blastwheelz</span>
+                            </p>
+                            <p className="text-white/60 text-xs">
+                              Requested: {new Date(pendingWithdrawal.createdAt).toLocaleString()}
+                            </p>
+                            <p className="text-yellow-400/80 text-xs mt-2">
+                              ⏳ Waiting for admin approval. You'll be notified once it's processed.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {transactions.length === 0 ? (
+                      <div className="text-center py-12 glass border border-orange-500/30 rounded-xl">
+                        <p className="text-white/60">No withdrawal requests yet</p>
+                        <p className="text-white/40 text-sm mt-2">Submit a withdrawal request from the dashboard to get started</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {transactions
+                          .filter((tx) => tx.type === 'WITHDRAWAL')
+                          .map((tx) => (
+                            <div
+                              key={tx.id}
+                              className="glass border border-orange-500/30 rounded-xl p-6 hover:border-orange-500/50 transition-colors"
+                            >
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <span
+                                      className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                                        tx.status === 'COMPLETED'
+                                          ? 'bg-green-500/20 text-green-400'
+                                          : tx.status === 'PENDING'
+                                          ? 'bg-yellow-500/20 text-yellow-400'
+                                          : 'bg-red-500/20 text-red-400'
+                                      }`}
+                                    >
+                                      {tx.status === 'PENDING'
+                                        ? '⏳ PENDING APPROVAL'
+                                        : tx.status === 'COMPLETED'
+                                        ? '✅ APPROVED'
+                                        : '❌ REJECTED'}
+                                    </span>
+                                    <span className="text-white/60 text-sm">
+                                      {new Date(tx.createdAt).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <p className="text-white font-semibold text-xl mb-1">
+                                    {Number(tx.amount).toFixed(2)} blastwheelz
+                                  </p>
+                                  {tx.metadata && (tx.metadata as any).userWalletAddress && (
+                                    <p className="text-white/60 text-sm font-mono">
+                                      Wallet: {(tx.metadata as any).userWalletAddress}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {tx.status === 'PENDING' && (
+                                <div className="mt-4 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                                  <p className="text-yellow-400 text-sm">
+                                    ⏳ Your withdrawal request is pending admin approval. You'll receive the funds once approved.
+                                  </p>
+                                </div>
+                              )}
+                              
+                              {tx.status === 'FAILED' && tx.metadata && (tx.metadata as any).rejectionReason && (
+                                <div className="mt-4 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                                  <p className="text-red-400 text-sm font-semibold mb-1">Rejection Reason:</p>
+                                  <p className="text-red-300 text-sm">{(tx.metadata as any).rejectionReason}</p>
+                                </div>
+                              )}
+                              
+                              {tx.status === 'COMPLETED' && tx.suiTxHash && (
+                                <div className="mt-4 flex items-center gap-2">
+                                  <a
+                                    href={`https://suiexplorer.com/txblock/${tx.suiTxHash}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                                  >
+                                    🔗 View on Sui Explorer
+                                  </a>
+                                  {tx.metadata && (tx.metadata as any).approvedAt && (
+                                    <span className="text-white/60 text-xs">
+                                      Approved: {new Date((tx.metadata as any).approvedAt).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                       </div>
                     )}
                   </div>
@@ -1139,7 +1307,14 @@ export default function DashboardPage() {
         {showWithdrawModal && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
             <div className="glass border border-blue-500/30 rounded-xl p-6 max-w-md w-full mx-4">
-              <h2 className="text-2xl font-bold text-white mb-4">Withdraw Blastwheelz</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">Request Withdrawal</h2>
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
+                <p className="text-yellow-400 text-sm font-semibold mb-2">⚠️ Admin Approval Required</p>
+                <p className="text-white/80 text-sm">
+                  Your withdrawal request will be reviewed by an admin. You will receive the WHEELS tokens in your wallet once approved. 
+                  You can only have one pending withdrawal request at a time.
+                </p>
+              </div>
               <p className="text-white/60 text-sm mb-6">
                 Convert your blastwheelz back to WHEELS tokens in your Sui wallet. Enter the amount you want to withdraw.
               </p>
@@ -1183,7 +1358,7 @@ export default function DashboardPage() {
                     disabled={withdrawing || !withdrawAmount || parseFloat(withdrawAmount) > parseFloat(blastwheelzBalance)}
                     className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {withdrawing ? 'Processing...' : 'Withdraw'}
+                    {withdrawing ? 'Submitting Request...' : 'Submit Request'}
                   </button>
                 </div>
               </div>

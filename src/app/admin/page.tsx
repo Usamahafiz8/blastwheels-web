@@ -12,7 +12,8 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [games, setGames] = useState<any[]>([]);
   const [marketplaceItems, setMarketplaceItems] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'games' | 'marketplace'>('stats');
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'games' | 'marketplace' | 'withdrawals'>('stats');
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
@@ -42,6 +43,15 @@ export default function AdminPage() {
       } else if (activeTab === 'marketplace') {
         const res = await apiClient.getAdminMarketplaceItems();
         if (res.data) setMarketplaceItems(res.data.items);
+      } else if (activeTab === 'withdrawals') {
+        const res = await apiClient.getPendingWithdrawals();
+        if (res.error) {
+          console.error('Failed to load withdrawals:', res.error);
+          alert(`Failed to load withdrawals: ${res.error}`);
+        } else if (res.data) {
+          console.log('Loaded withdrawals:', res.data.withdrawals);
+          setWithdrawals(res.data.withdrawals || []);
+        }
       }
     } catch (error) {
       console.error('Failed to load admin data:', error);
@@ -69,7 +79,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex space-x-4 mb-6 border-b border-orange-500/20">
-          {(['stats', 'users', 'games', 'marketplace'] as const).map((tab) => (
+          {(['stats', 'users', 'games', 'marketplace', 'withdrawals'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -80,6 +90,11 @@ export default function AdminPage() {
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'withdrawals' && withdrawals.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                  {withdrawals.length}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -215,6 +230,89 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Withdrawals Tab */}
+        {activeTab === 'withdrawals' && (
+          <div className="glass border border-orange-500/30 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-white mb-4">Pending Withdrawals</h2>
+            {withdrawals.length === 0 ? (
+              <p className="text-white/60">No pending withdrawal requests</p>
+            ) : (
+              <div className="space-y-4">
+                {withdrawals.map((withdrawal) => (
+                  <div
+                    key={withdrawal.id}
+                    className="p-4 bg-white/5 rounded-lg border border-orange-500/20 hover:border-orange-500/40 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="text-white font-semibold">{withdrawal.username}</p>
+                        <p className="text-white/60 text-sm font-mono">{withdrawal.walletAddress}</p>
+                        {withdrawal.email && (
+                          <p className="text-white/60 text-sm">{withdrawal.email}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-orange-400 font-bold text-xl">
+                          {Number(withdrawal.amount).toFixed(2)} blastwheelz
+                        </p>
+                        <p className="text-white/60 text-xs">
+                          Balance: {Number(withdrawal.currentBalance).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-white/60 mb-3">
+                      <span>Requested: {new Date(withdrawal.createdAt).toLocaleString()}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          if (confirm(`Approve withdrawal of ${withdrawal.amount} blastwheelz to ${withdrawal.username}?`)) {
+                            try {
+                              const res = await apiClient.approveWithdrawal(withdrawal.id);
+                              if (res.error) {
+                                alert(res.error);
+                              } else {
+                                alert('Withdrawal approved and processed successfully!');
+                                loadData();
+                              }
+                            } catch (error: any) {
+                              alert(error.message || 'Failed to approve withdrawal');
+                            }
+                          }
+                        }}
+                        className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 font-semibold rounded transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const reason = prompt('Enter rejection reason (optional):');
+                          if (reason !== null) {
+                            try {
+                              const res = await apiClient.rejectWithdrawal(withdrawal.id, reason || undefined);
+                              if (res.error) {
+                                alert(res.error);
+                              } else {
+                                alert('Withdrawal rejected');
+                                loadData();
+                              }
+                            } catch (error: any) {
+                              alert(error.message || 'Failed to reject withdrawal');
+                            }
+                          }
+                        }}
+                        className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold rounded transition-colors"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

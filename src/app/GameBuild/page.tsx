@@ -56,7 +56,7 @@ export default function GameBuildPage() {
     // Test if Unity files are accessible before loading
     const testFileAccess = async () => {
       try {
-        const response = await fetch('https://gamenock.com/unity_games/Build/Build.loader.js', { method: 'HEAD' });
+        const response = await fetch('https://plum-starling-225350.hostingersite.com/game/Buildd/Build.loader.js', { method: 'HEAD' });
         if (!response.ok) {
           console.error('Unity loader file not accessible:', response.status);
           alert('Unity game files not accessible. Please try refreshing the page.');

@@ -89,12 +89,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Prepare treasury keypair
-    const treasuryKeypair = getTreasuryKeypair();
-    if (!treasuryKeypair) {
+    // Check if user already has a pending withdrawal request
+    const pendingWithdrawal = await prisma.transaction.findFirst({
+      where: {
+        userId: user.id,
+        type: 'WITHDRAWAL',
+        status: 'PENDING',
+      },
+    });
+
+    if (pendingWithdrawal) {
       return NextResponse.json(
-        { error: 'Treasury wallet not configured' },
-        { status: 500 }
+        { error: 'You already have a pending withdrawal request. Please wait for admin approval or cancel the existing request.' },
+        { status: 400 }
       );
     }
 
@@ -106,101 +113,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convert amount to smallest unit (assuming 9 decimals like WHEELS)
-    const amountInSmallestUnit = BigInt(Math.floor(withdrawAmount * 1_000_000_000));
-
-    // Build transfer transaction from treasury to user
-    const tx = new Transaction();
-
-    // Get treasury coins for WHEELS token
-    const treasuryAddress = treasuryKeypair.toSuiAddress();
-    const coins = await suiClient.getCoins({
-      owner: treasuryAddress,
-      coinType: SUI_CONFIG.coinType,
-    });
-
-    if (coins.data.length === 0) {
-      return NextResponse.json(
-        { error: 'Treasury has insufficient WHEELS balance' },
-        { status: 500 }
-      );
-    }
-
-    // Calculate total balance
-    let totalTreasuryBalance = BigInt(0);
-    for (const coin of coins.data) {
-      totalTreasuryBalance += BigInt(coin.balance || '0');
-    }
-
-    if (totalTreasuryBalance < amountInSmallestUnit) {
-      return NextResponse.json(
-        { error: 'Treasury has insufficient WHEELS balance' },
-        { status: 500 }
-      );
-    }
-
-    // Build coin transfer
-    // Use the first coin as the primary coin object
-    const primaryCoin = tx.object(coins.data[0].coinObjectId);
-    const additionalCoins = coins.data.slice(1).map((coin) => tx.object(coin.coinObjectId));
-
-    // If there are additional coins, merge them into the primary coin
-    if (additionalCoins.length > 0) {
-      tx.mergeCoins(primaryCoin, additionalCoins);
-    }
-
-    // Split the exact amount needed from the primary coin
-    const paymentCoin = tx.splitCoins(primaryCoin, [amountInSmallestUnit]);
-
-    // Transfer the payment coin to the user's wallet
-    tx.transferObjects([paymentCoin], userWalletAddress);
-
-    tx.setGasBudget(10000000);
-
-    // Sign and execute transaction with treasury wallet
-    let txResult;
-    try {
-      txResult = await suiClient.signAndExecuteTransaction({
-        signer: treasuryKeypair,
-        transaction: tx,
-        options: {
-          showEffects: true,
-          showBalanceChanges: true,
-          showInput: true,
-        },
-      });
-    } catch (chainError: any) {
-      console.error('Withdrawal on-chain execution error:', chainError);
-      return NextResponse.json(
-        {
-          error: 'Withdrawal transaction failed on-chain',
-          message: chainError.message || 'signAndExecuteTransaction threw an error',
-        },
-        { status: 500 }
-      );
-    }
-
-    // Log full txResult for debugging
-    console.error('Withdrawal txResult:', JSON.stringify(txResult, null, 2));
-
-    if (txResult.effects?.status?.status !== 'success') {
-      const chainErrorMessage =
-        txResult.effects?.status?.error || 'Unknown on-chain error';
-      return NextResponse.json(
-        {
-          error: 'Withdrawal transaction failed on-chain',
-          message: chainErrorMessage,
-        },
-        { status: 500 }
-      );
-    }
-
-    const suiTxHash = txResult.digest;
-
-    // Use database transaction to deduct balance and record withdrawal
-    const result = await prisma.$transaction(async (txDb) => {
-      // Deduct from user balance (1:1 conversion)
-      const updatedUser = await txDb.user.update({
+    // Deduct balance and create pending withdrawal request atomically
+    const result = await prisma.$transaction(async (tx) => {
+      // Deduct from user balance immediately
+      const updatedUser = await tx.user.update({
         where: { id: user.id },
         data: {
           blastwheelzBalance: {
@@ -208,40 +124,44 @@ export async function POST(req: NextRequest) {
           },
         },
         select: {
+          id: true,
+          username: true,
+          walletAddress: true,
           blastwheelzBalance: true,
         },
       });
 
-      // Create transaction record
-      const transaction = await txDb.transaction.create({
+      // Create pending withdrawal request (admin approval required)
+      const withdrawalRequest = await tx.transaction.create({
         data: {
           userId: user.id,
           type: 'WITHDRAWAL',
           amount: withdrawAmount.toString(),
-          suiTxHash,
-          status: 'COMPLETED',
+          status: 'PENDING',
           metadata: {
             currencyType: 'blastwheelz',
             conversionRate: 1,
             targetToken: 'WHEELS',
             withdrawalType: 'TREASURY_WITHDRAWAL',
+            walletAddress: userWalletAddress,
+            requestedAt: new Date().toISOString(),
+            balanceDeducted: true, // Flag to indicate balance was already deducted
           },
         },
       });
 
-      return { updatedUser, transaction };
+      return { withdrawalRequest, updatedUser };
     });
 
     return NextResponse.json({
-      message: 'Withdrawal successful',
-      balance: result.updatedUser.blastwheelzBalance.toString(),
-      transaction: {
-        id: result.transaction.id,
-        amount: result.transaction.amount.toString(),
-        type: result.transaction.type,
-        status: result.transaction.status,
-        suiTxHash,
+      message: 'Withdrawal request submitted. Waiting for admin approval. Your balance has been deducted and will be returned if rejected.',
+      request: {
+        id: result.withdrawalRequest.id,
+        amount: result.withdrawalRequest.amount.toString(),
+        status: result.withdrawalRequest.status,
+        createdAt: result.withdrawalRequest.createdAt,
       },
+      newBalance: result.updatedUser.blastwheelzBalance.toString(),
     });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {

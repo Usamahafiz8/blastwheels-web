@@ -351,6 +351,29 @@ class ApiClient {
     });
   }
 
+  async getPendingWithdrawals() {
+    return this.request<{ withdrawals: any[] }>('/admin/withdrawals');
+  }
+
+  async approveWithdrawal(id: string) {
+    return this.request<{ message: string; transaction: any; user: any }>(
+      `/admin/withdrawals/${id}/approve`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
+  async rejectWithdrawal(id: string, reason?: string) {
+    return this.request<{ message: string; transaction: any }>(
+      `/admin/withdrawals/${id}/reject`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      }
+    );
+  }
+
   async getPlatformStats() {
     return this.request<{ stats: any }>('/admin/stats');
   }
@@ -458,6 +481,10 @@ class ApiClient {
       limit: number;
       offset: number;
     }>(`/currency/history${query}`);
+  }
+
+  async getPendingWithdrawal() {
+    return this.request<{ withdrawal: any | null }>('/currency/pending-withdrawal');
   }
 
   async adjustCurrency(payload: {
