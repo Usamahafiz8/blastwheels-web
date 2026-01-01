@@ -80,7 +80,7 @@ export default function RegisterPage() {
 
       if (success) {
         setToast({
-          message: 'Registration successful! Redirecting...',
+          message: 'Registration successful! You received 500 blastwheelz as a welcome bonus! Redirecting...',
           isVisible: true,
           type: 'success',
         });
@@ -95,8 +95,10 @@ export default function RegisterPage() {
         });
       }
     } catch (error: any) {
+      // Extract error message - handle both Error objects and API error responses
+      const errorMessage = error?.message || error?.error || 'Registration failed. Please try again.';
       setToast({
-        message: error.message || 'Registration failed. Please try again.',
+        message: errorMessage,
         isVisible: true,
         type: 'error',
       });

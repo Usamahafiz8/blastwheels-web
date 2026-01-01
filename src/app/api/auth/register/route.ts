@@ -93,31 +93,56 @@ export async function POST(request: NextRequest) {
       passwordHash = await bcrypt.hash(password, 10);
     }
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        walletAddress: finalWalletAddress,
-        username,
-        email: email || null,
-        passwordHash,
-        role: 'PLAYER',
-      },
-      select: {
-        id: true,
-        walletAddress: true,
-        username: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
+    // Welcome bonus amount (500 blastwheelz)
+    const welcomeBonus = 500;
+
+    // Create user with welcome bonus and create player stats in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create user with initial balance
+      const user = await tx.user.create({
+        data: {
+          walletAddress: finalWalletAddress,
+          username,
+          email: email || null,
+          passwordHash,
+          role: 'PLAYER',
+          blastwheelzBalance: welcomeBonus.toString(), // Give new users 500 currency as welcome bonus
+        },
+        select: {
+          id: true,
+          walletAddress: true,
+          username: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      // Create player stats
+      await tx.playerStats.create({
+        data: {
+          userId: user.id,
+        },
+      });
+
+      // Create transaction record for welcome bonus
+      await tx.transaction.create({
+        data: {
+          userId: user.id,
+          type: 'DEPOSIT',
+          amount: welcomeBonus.toString(),
+          status: 'COMPLETED',
+          metadata: {
+            reason: 'Welcome bonus for new user registration',
+            type: 'WELCOME_BONUS',
+          },
+        },
+      });
+
+      return user;
     });
 
-    // Create player stats
-    await prisma.playerStats.create({
-      data: {
-        userId: user.id,
-      },
-    });
+    const user = result;
 
     // Generate token
     const token = generateToken({
@@ -134,10 +159,28 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
+    
+    // Handle Prisma unique constraint violations
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.[0] || 'field';
+      return NextResponse.json(
+        { error: `User already exists with this ${field}` },
+        { status: 400 }
+      );
+    }
+    
+    // Handle other Prisma errors
+    if (error.code?.startsWith('P')) {
+      return NextResponse.json(
+        { error: 'Database error during registration', details: error.message },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

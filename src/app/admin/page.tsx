@@ -119,6 +119,7 @@ export default function AdminPage() {
                     <th className="pb-3 text-white/60 font-semibold">Wallet</th>
                     <th className="pb-3 text-white/60 font-semibold">Role</th>
                     <th className="pb-3 text-white/60 font-semibold">Status</th>
+                    <th className="pb-3 text-white/60 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -149,6 +150,33 @@ export default function AdminPage() {
                         >
                           {user.isActive ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td className="py-3">
+                        {user.role !== 'ADMIN' && (
+                          <button
+                            onClick={async () => {
+                              if (confirm(`Are you sure you want to delete user "${user.username}"? This action cannot be undone.`)) {
+                                try {
+                                  const res = await apiClient.deleteUserAdmin(user.id);
+                                  if (res.error) {
+                                    alert(res.error);
+                                  } else {
+                                    alert('User deleted successfully');
+                                    loadData();
+                                  }
+                                } catch (error: any) {
+                                  alert(error.message || 'Failed to delete user');
+                                }
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm rounded transition-colors"
+                          >
+                            Delete
+                          </button>
+                        )}
+                        {user.role === 'ADMIN' && (
+                          <span className="text-white/40 text-xs">Protected</span>
+                        )}
                       </td>
                     </tr>
                   ))}

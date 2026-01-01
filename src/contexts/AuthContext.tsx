@@ -91,10 +91,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.data.user);
         return true;
       }
+      // If response has an error, throw it
+      if (response.error) {
+        throw new Error(response.error);
+      }
       return false;
     } catch (error: any) {
       console.error('Registration failed:', error);
-      throw new Error(error.error || 'Registration failed');
+      // If it's already an Error object, re-throw it
+      if (error instanceof Error) {
+        throw error;
+      }
+      // Otherwise, extract error message
+      throw new Error(error?.error || error?.message || 'Registration failed');
     }
   };
 
