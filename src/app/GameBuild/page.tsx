@@ -56,7 +56,7 @@ export default function GameBuildPage() {
     // Test if Unity files are accessible before loading
     const testFileAccess = async () => {
       try {
-        const response = await fetch('/GameBuild/Build/Build.loader.js', { method: 'HEAD' });
+        const response = await fetch('https://gamenock.com/unity_games/Build/Build.loader.js', { method: 'HEAD' });
         if (!response.ok) {
           console.error('Unity loader file not accessible:', response.status);
           alert('Unity game files not accessible. Please try refreshing the page.');
@@ -133,10 +133,8 @@ export default function GameBuildPage() {
       }
     }
 
-    // Use absolute URLs for production to ensure proper loading
-    const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
-    const baseUrl = isProduction ? window.location.origin : '';
-    const buildUrl = baseUrl + '/GameBuild/Build';
+    // Load from external URL
+    const buildUrl = 'https://gamenock.com/unity_games/Build';
 
     const loaderUrl = buildUrl + '/Build.loader.js';
     const config = {
