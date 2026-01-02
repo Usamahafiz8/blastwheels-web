@@ -100,30 +100,30 @@ export async function POST(request: NextRequest) {
     const result = await prisma.$transaction(async (tx) => {
       // Create user with initial balance
       const user = await tx.user.create({
-        data: {
-          walletAddress: finalWalletAddress,
-          username,
-          email: email || null,
-          passwordHash,
-          role: 'PLAYER',
+      data: {
+        walletAddress: finalWalletAddress,
+        username,
+        email: email || null,
+        passwordHash,
+        role: 'PLAYER',
           blastwheelzBalance: welcomeBonus.toString(), // Give new users 500 currency as welcome bonus
-        },
-        select: {
-          id: true,
-          walletAddress: true,
-          username: true,
-          email: true,
-          role: true,
-          createdAt: true,
-        },
-      });
+      },
+      select: {
+        id: true,
+        walletAddress: true,
+        username: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
 
-      // Create player stats
+    // Create player stats
       await tx.playerStats.create({
-        data: {
-          userId: user.id,
-        },
-      });
+      data: {
+        userId: user.id,
+      },
+    });
 
       // Create transaction record for welcome bonus
       await tx.transaction.create({

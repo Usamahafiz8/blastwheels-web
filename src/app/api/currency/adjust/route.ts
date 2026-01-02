@@ -92,13 +92,17 @@ export async function POST(req: NextRequest) {
     const previousBalance = Number(currentUser.blastwheelzBalance);
     const newBalance = previousBalance + numericAmount;
 
-    // Prevent negative balance
+    // Prevent negative balance - check if user has insufficient balance for negative adjustment
     if (newBalance < 0) {
+      const adjustmentAmount = Math.abs(numericAmount);
       return NextResponse.json(
         {
-          error: 'Insufficient balance',
+          error: numericAmount < 0 
+            ? `Insufficient balance. You have ${previousBalance} blastwheelz, but need ${adjustmentAmount} blastwheelz to complete this transaction.`
+            : 'Insufficient balance',
           currentBalance: previousBalance,
           requestedAdjustment: numericAmount,
+          requiredAmount: numericAmount < 0 ? adjustmentAmount : undefined,
           wouldResultIn: newBalance,
         },
         { status: 400 }
@@ -163,6 +167,7 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
 
 
 
